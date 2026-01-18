@@ -212,9 +212,9 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   logo: {
-    width: 180,
-    height: 180,
-    marginBottom: 5,
+    width: 270,
+    height: 270,
+    marginBottom: 4.5,
   },
   title: {
     fontSize: 32,
