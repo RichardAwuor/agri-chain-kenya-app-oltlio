@@ -1,11 +1,11 @@
 
 {
   "expo": {
-    "name": "AgriChain Kenya",
-    "slug": "agrichain-kenya",
+    "name": "PLUS-Kenya",
+    "slug": "PLUS-Kenya",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
+    "icon": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -22,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
+        "foregroundImage": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.pluskenya.agrichain"
     },
     "web": {
-      "favicon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
+      "favicon": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -45,5 +45,6 @@
       "router": {},
       "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
     }
-  }
+  },
+  "scheme": "PLUS-Kenya"
 }
