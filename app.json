@@ -2,7 +2,7 @@
 {
   "expo": {
     "name": "PLUS-Kenya",
-    "slug": "PLUS-Kenya",
+    "slug": "plus-kenya",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
@@ -37,7 +37,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "agrichain-kenya",
+    "scheme": "plus-kenya",
     "experiments": {
       "typedRoutes": true
     },
@@ -45,6 +45,5 @@
       "router": {},
       "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
     }
-  },
-  "scheme": "PLUS-Kenya"
+  }
 }
