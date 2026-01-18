@@ -13,6 +13,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -184,6 +185,15 @@ export default function BuyerCreateOrder() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Logo Header */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('@/assets/images/0e340602-174b-4b22-bccd-82d159adc307.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Create New Order</Text>
           <Text style={styles.headerSubtitle}>{buyerName}</Text>
@@ -344,6 +354,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 80,
+    height: 80,
   },
   header: {
     marginBottom: 24,

@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
@@ -216,6 +217,15 @@ export default function ProducerReporting() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Logo Header */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('@/assets/images/0e340602-174b-4b22-bccd-82d159adc307.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
         {/* Report Type Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Report Type</Text>
@@ -361,6 +371,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 80,
+    height: 80,
   },
   section: {
     marginBottom: 32,

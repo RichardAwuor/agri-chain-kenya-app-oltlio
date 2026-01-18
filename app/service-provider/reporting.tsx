@@ -268,6 +268,15 @@ export default function ServiceProviderReporting() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Logo Header */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('@/assets/images/0e340602-174b-4b22-bccd-82d159adc307.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Report Farm Visit</Text>
           <Text style={styles.headerSubtitle}>{serviceProviderName}</Text>
@@ -581,6 +590,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 80,
+    height: 80,
   },
   header: {
     marginBottom: 24,

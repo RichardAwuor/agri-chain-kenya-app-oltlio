@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   View,
@@ -47,6 +48,10 @@ export default function FloatingTabBar({
   const pathname = usePathname();
   const theme = useTheme();
   const animatedValue = useSharedValue(0);
+
+  // PLUS-Kenya brand colors: Green (active), Red (idle)
+  const activeColor = '#006400'; // Kenya green
+  const idleColor = '#DC143C'; // Kenya red
 
   // Improved active tab detection with better path matching
   const activeTabIndex = React.useMemo(() => {
@@ -186,13 +191,13 @@ export default function FloatingTabBar({
                       android_material_icon_name={tab.icon}
                       ios_icon_name={tab.icon}
                       size={24}
-                      color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
+                      color={isActive ? activeColor : idleColor}
                     />
                     <Text
                       style={[
                         styles.tabLabel,
-                        { color: theme.dark ? '#98989D' : '#8E8E93' },
-                        isActive && { color: theme.colors.primary, fontWeight: '600' },
+                        { color: isActive ? activeColor : idleColor },
+                        isActive && { fontWeight: '600' },
                       ]}
                     >
                       {tab.label}

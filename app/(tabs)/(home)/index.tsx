@@ -132,7 +132,7 @@ export default function HomeScreen() {
         {/* Header with Logo and Slogan */}
         <View style={styles.header}>
           <Image 
-            source={{ uri: 'https://prod-finalquest-user-projects-storage-bucket-aws.s3.amazonaws.com/user-projects/7bda0412-f420-4692-bde4-caf98ff36e25/assets/images/c9f89323-d01b-43ca-9fd4-6755e767fcab.png' }}
+            source={require('@/assets/images/0e340602-174b-4b22-bccd-82d159adc307.png')}
             style={styles.logo}
             resizeMode="contain"
           />
