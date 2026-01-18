@@ -209,12 +209,12 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 32,
-    paddingTop: 18,
+    paddingTop: 16,
   },
   logo: {
     width: 270,
     height: 270,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   title: {
     fontSize: 32,
