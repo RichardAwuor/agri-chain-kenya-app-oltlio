@@ -206,7 +206,32 @@ export default function ServiceProviderReporting() {
     setLoading(true);
 
     try {
-      // TODO: Backend Integration - POST /api/service-providers/visits
+      const { BACKEND_URL } = await import('@/utils/api');
+
+      // Upload photos if any
+      const photoUrls: string[] = [];
+      for (const photo of photos) {
+        if (photo.startsWith('file://')) {
+          console.log('ServiceProviderReporting: Uploading photo');
+          const formData = new FormData();
+          formData.append('image', {
+            uri: photo,
+            type: 'image/jpeg',
+            name: `visit-photo-${Date.now()}.jpg`,
+          } as any);
+
+          const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/visit-photo`, {
+            method: 'POST',
+            body: formData,
+          });
+          const uploadData = await uploadResponse.json();
+          photoUrls.push(uploadData.url);
+          console.log('ServiceProviderReporting: Photo uploaded', uploadData.url);
+        } else {
+          photoUrls.push(photo);
+        }
+      }
+
       const visitData = {
         serviceProviderId,
         producerId: selectedFarmer.id,
@@ -219,12 +244,27 @@ export default function ServiceProviderReporting() {
         shippedCropType: shippedCropType || null,
         shippedVolumeKg: shippedVolumeKg ? parseFloat(shippedVolumeKg) : null,
         comments: comments || null,
-        photos, // Array of photo URIs
+        photoUrls,
       };
 
       console.log('ServiceProviderReporting: Submitting visit data', visitData);
 
-      // For now, show success message
+      const response = await fetch(`${BACKEND_URL}/api/service-providers/visits`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(visitData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit visit report');
+      }
+
+      const result = await response.json();
+      console.log('ServiceProviderReporting: Visit report submitted successfully', result);
+
       Alert.alert('Success', 'Visit report submitted successfully!', [
         {
           text: 'OK',
@@ -242,9 +282,9 @@ export default function ServiceProviderReporting() {
           },
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('ServiceProviderReporting: Error submitting visit:', error);
-      Alert.alert('Error', 'Failed to submit visit report. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to submit visit report. Please try again.');
     } finally {
       setLoading(false);
     }

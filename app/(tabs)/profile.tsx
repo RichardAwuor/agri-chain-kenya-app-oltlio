@@ -12,17 +12,20 @@ interface UserData {
   userType: string;
   firstName: string;
   lastName: string;
-  phone: string;
-  dateOfBirth: string;
-  idNumber: string;
+  phone?: string;
+  email?: string;
+  dateOfBirth?: string;
+  idNumber?: string;
   farmerId?: string;
   county: string;
   subCounty: string;
   ward: string;
-  addressLat: number;
-  addressLng: number;
-  farmAcreage: number;
-  cropType: string;
+  addressLat?: number;
+  addressLng?: number;
+  farmAcreage?: number;
+  cropType?: string;
+  organizationName?: string;
+  coreMandates?: string[];
 }
 
 export default function ProfileScreen() {
@@ -155,16 +158,32 @@ export default function ProfileScreen() {
               <Text style={styles.infoLabel}>Name</Text>
               <Text style={styles.infoValue}>{userData.firstName} {userData.lastName}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>{userData.phone}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date of Birth</Text>
-              <Text style={styles.infoValue}>
-                {new Date(userData.dateOfBirth).toLocaleDateString()}
-              </Text>
-            </View>
+            {userData.email && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>{userData.email}</Text>
+              </View>
+            )}
+            {userData.phone && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Phone</Text>
+                <Text style={styles.infoValue}>{userData.phone}</Text>
+              </View>
+            )}
+            {userData.dateOfBirth && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Date of Birth</Text>
+                <Text style={styles.infoValue}>
+                  {new Date(userData.dateOfBirth).toLocaleDateString()}
+                </Text>
+              </View>
+            )}
+            {userData.organizationName && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Organization</Text>
+                <Text style={styles.infoValue}>{userData.organizationName}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -194,93 +213,118 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <IconSymbol
-              ios_icon_name="leaf.fill"
-              android_material_icon_name="eco"
-              size={24}
-              color={colors.primary}
-            />
-            <Text style={styles.sectionTitle}>Farm Information</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Farm Acreage</Text>
-              <Text style={styles.infoValue}>{userData.farmAcreage} acres</Text>
+        {userData.userType === 'producer' && userData.farmAcreage && userData.cropType && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <IconSymbol
+                ios_icon_name="leaf.fill"
+                android_material_icon_name="eco"
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={styles.sectionTitle}>Farm Information</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Crop Type</Text>
-              {editing ? (
-                <View style={styles.editContainer}>
-                  {cropTypes.map((crop) => (
-                    <TouchableOpacity
-                      key={crop}
-                      style={[
-                        styles.cropOption,
-                        editedCropType === crop && styles.cropOptionSelected,
-                      ]}
-                      onPress={() => setEditedCropType(crop)}
-                    >
-                      <Text
+            <View style={styles.card}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Farm Acreage</Text>
+                <Text style={styles.infoValue}>{userData.farmAcreage} acres</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Crop Type</Text>
+                {editing ? (
+                  <View style={styles.editContainer}>
+                    {cropTypes.map((crop) => (
+                      <TouchableOpacity
+                        key={crop}
                         style={[
-                          styles.cropOptionText,
-                          editedCropType === crop && styles.cropOptionTextSelected,
+                          styles.cropOption,
+                          editedCropType === crop && styles.cropOptionSelected,
                         ]}
+                        onPress={() => setEditedCropType(crop)}
                       >
-                        {crop}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.infoValue}>{userData.cropType}</Text>
-              )}
-            </View>
-            {!editing && (
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => {
-                  console.log('ProfileScreen: Edit crop type button pressed');
-                  setEditing(true);
-                }}
-              >
-                <IconSymbol
-                  ios_icon_name="pencil"
-                  android_material_icon_name="edit"
-                  size={16}
-                  color={colors.primary}
-                />
-                <Text style={styles.editButtonText}>Edit Crop Type</Text>
-              </TouchableOpacity>
-            )}
-            {editing && (
-              <View style={styles.editActions}>
+                        <Text
+                          style={[
+                            styles.cropOptionText,
+                            editedCropType === crop && styles.cropOptionTextSelected,
+                          ]}
+                        >
+                          {crop}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.infoValue}>{userData.cropType}</Text>
+                )}
+              </View>
+              {!editing && (
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.cancelButton]}
+                  style={styles.editButton}
                   onPress={() => {
-                    console.log('ProfileScreen: Cancel edit');
-                    setEditing(false);
-                    setEditedCropType(userData.cropType);
+                    console.log('ProfileScreen: Edit crop type button pressed');
+                    setEditing(true);
                   }}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <IconSymbol
+                    ios_icon_name="pencil"
+                    android_material_icon_name="edit"
+                    size={16}
+                    color={colors.primary}
+                  />
+                  <Text style={styles.editButtonText}>Edit Crop Type</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.saveButton]}
-                  onPress={handleSaveCropType}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={colors.card} size="small" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
+              )}
+              {editing && (
+                <View style={styles.editActions}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.cancelButton]}
+                    onPress={() => {
+                      console.log('ProfileScreen: Cancel edit');
+                      setEditing(false);
+                      setEditedCropType(userData.cropType);
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.saveButton]}
+                    onPress={handleSaveCropType}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
+        )}
+
+        {userData.userType === 'regulator' && userData.coreMandates && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <IconSymbol
+                ios_icon_name="checkmark.shield"
+                android_material_icon_name="verified"
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={styles.sectionTitle}>Core Mandates</Text>
+            </View>
+            <View style={styles.card}>
+              <View style={styles.mandatesContainer}>
+                {userData.coreMandates.map((mandate, index) => (
+                  <View key={index} style={styles.mandateChip}>
+                    <Text style={styles.mandateChipText}>{mandate}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
 
         {projectedHarvest && (
           <View style={styles.section}>
@@ -321,17 +365,19 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        <View style={styles.infoBox}>
-          <IconSymbol
-            ios_icon_name="info.circle"
-            android_material_icon_name="info"
-            size={20}
-            color={colors.primary}
-          />
-          <Text style={styles.infoText}>
-            You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type using the PLUS-Kenya crop matrix.
-          </Text>
-        </View>
+        {userData.userType === 'producer' && (
+          <View style={styles.infoBox}>
+            <IconSymbol
+              ios_icon_name="info.circle"
+              android_material_icon_name="info"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.infoText}>
+              You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type using the PLUS-Kenya crop matrix.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -531,5 +577,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     lineHeight: 20,
+  },
+  mandatesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  mandateChip: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  mandateChipText: {
+    fontSize: 14,
+    color: colors.card,
+    fontWeight: '600',
   },
 });

@@ -195,42 +195,107 @@ export default function BuyerRegistration() {
     setLoading(true);
 
     try {
-      // TODO: Backend Integration - POST /api/buyers/register with multipart form data
-      // For now, we'll use the existing user registration endpoint
-      const { default: api } = await import('@/utils/api');
+      const { BACKEND_URL } = await import('@/utils/api');
       
-      const userData = {
-        userType: 'buyer',
+      // First, upload work ID images if they exist
+      let workIdFrontUrl = workIdFront;
+      let workIdBackUrl = workIdBack;
+
+      if (workIdFront && workIdFront.startsWith('file://')) {
+        console.log('BuyerRegistration: Uploading front work ID');
+        const formData = new FormData();
+        formData.append('image', {
+          uri: workIdFront,
+          type: 'image/jpeg',
+          name: 'work-id-front.jpg',
+        } as any);
+
+        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+        workIdFrontUrl = uploadData.url;
+        console.log('BuyerRegistration: Front work ID uploaded', workIdFrontUrl);
+      }
+
+      if (workIdBack && workIdBack.startsWith('file://')) {
+        console.log('BuyerRegistration: Uploading back work ID');
+        const formData = new FormData();
+        formData.append('image', {
+          uri: workIdBack,
+          type: 'image/jpeg',
+          name: 'work-id-back.jpg',
+        } as any);
+
+        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+        workIdBackUrl = uploadData.url;
+        console.log('BuyerRegistration: Back work ID uploaded', workIdBackUrl);
+      }
+
+      // Register buyer
+      const registrationData = {
         email,
+        confirmEmail: email, // Same as email since we already validated
         firstName,
         lastName,
         organizationName,
-        county: 'N/A', // Buyers don't have county
-        subCounty: 'N/A',
-        ward: 'N/A',
-        workIdFrontUrl: workIdFront || undefined,
-        workIdBackUrl: workIdBack || undefined,
+        workIdFrontUrl,
+        workIdBackUrl,
+        mainOfficeAddress,
+        officeState,
+        officeCity,
+        officeZipCode,
+        deliveryAirport,
       };
 
-      console.log('BuyerRegistration: Registering user', userData);
-      const result = await api.registerUser(userData);
+      console.log('BuyerRegistration: Registering buyer', registrationData);
+      const response = await fetch(`${BACKEND_URL}/api/buyers/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const result = await response.json();
 
       // Save to AsyncStorage
-      await AsyncStorage.setItem('userId', result.user.id);
+      await AsyncStorage.setItem('userId', result.id);
       await AsyncStorage.setItem('userType', 'buyer');
-      await AsyncStorage.setItem('userData', JSON.stringify(result.user));
+      await AsyncStorage.setItem('userData', JSON.stringify({
+        id: result.id,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        organizationName: result.organizationName,
+        mainOfficeAddress,
+        officeState,
+        officeCity,
+        officeZipCode,
+        deliveryAirport,
+      }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
 
-      console.log('BuyerRegistration: Registration successful', result.user.id);
+      console.log('BuyerRegistration: Registration successful', result.id);
       Alert.alert('Success', 'Registration completed successfully!', [
         {
           text: 'OK',
           onPress: () => router.replace('/buyer/dashboard'),
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('BuyerRegistration: Registration failed:', error);
-      Alert.alert('Error', 'Registration failed. Please try again.');
+      Alert.alert('Error', error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

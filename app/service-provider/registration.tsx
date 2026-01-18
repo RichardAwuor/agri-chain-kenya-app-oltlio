@@ -307,43 +307,105 @@ export default function ServiceProviderRegistration() {
     setLoading(true);
 
     try {
-      // TODO: Backend Integration - POST /api/service-providers/register with multipart form data
-      // For now, we'll use the existing user registration endpoint
-      const { default: api } = await import('@/utils/api');
+      const { BACKEND_URL } = await import('@/utils/api');
       
-      const userData = {
-        userType: 'service_provider',
+      // First, upload work ID images if they exist
+      let workIdFrontUrl = workIdFront;
+      let workIdBackUrl = workIdBack;
+
+      if (workIdFront && workIdFront.startsWith('file://')) {
+        console.log('ServiceProviderRegistration: Uploading front work ID');
+        const formData = new FormData();
+        formData.append('image', {
+          uri: workIdFront,
+          type: 'image/jpeg',
+          name: 'work-id-front.jpg',
+        } as any);
+
+        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+        workIdFrontUrl = uploadData.url;
+        console.log('ServiceProviderRegistration: Front work ID uploaded', workIdFrontUrl);
+      }
+
+      if (workIdBack && workIdBack.startsWith('file://')) {
+        console.log('ServiceProviderRegistration: Uploading back work ID');
+        const formData = new FormData();
+        formData.append('image', {
+          uri: workIdBack,
+          type: 'image/jpeg',
+          name: 'work-id-back.jpg',
+        } as any);
+
+        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+        workIdBackUrl = uploadData.url;
+        console.log('ServiceProviderRegistration: Back work ID uploaded', workIdBackUrl);
+      }
+
+      // Register service provider
+      const registrationData = {
         email,
+        confirmEmail: email, // Same as email since we already validated
         firstName,
         lastName,
         organizationName,
+        workIdFrontUrl,
+        workIdBackUrl,
         county,
         subCounty,
         ward,
-        coreMandate: coreMandates.join(', '), // Store as comma-separated string for now
-        workIdFrontUrl: workIdFront || undefined,
-        workIdBackUrl: workIdBack || undefined,
+        coreMandates,
       };
 
-      console.log('ServiceProviderRegistration: Registering user', userData);
-      const result = await api.registerUser(userData);
+      console.log('ServiceProviderRegistration: Registering service provider', registrationData);
+      const response = await fetch(`${BACKEND_URL}/api/service-providers/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const result = await response.json();
 
       // Save to AsyncStorage
-      await AsyncStorage.setItem('userId', result.user.id);
+      await AsyncStorage.setItem('userId', result.id);
       await AsyncStorage.setItem('userType', 'service_provider');
-      await AsyncStorage.setItem('userData', JSON.stringify(result.user));
+      await AsyncStorage.setItem('userData', JSON.stringify({
+        id: result.id,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        organizationName: result.organizationName,
+        county,
+        subCounty,
+        ward,
+        coreMandates,
+      }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
 
-      console.log('ServiceProviderRegistration: Registration successful', result.user.id);
+      console.log('ServiceProviderRegistration: Registration successful', result.id);
       Alert.alert('Success', 'Registration completed successfully!', [
         {
           text: 'OK',
           onPress: () => router.replace('/service-provider/dashboard'),
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('ServiceProviderRegistration: Registration failed:', error);
-      Alert.alert('Error', 'Registration failed. Please try again.');
+      Alert.alert('Error', error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

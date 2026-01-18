@@ -137,7 +137,8 @@ export default function BuyerCreateOrder() {
     setLoading(true);
 
     try {
-      // TODO: Backend Integration - POST /api/buyers/orders
+      const { BACKEND_URL } = await import('@/utils/api');
+
       const orderData = {
         buyerId,
         cropType,
@@ -147,7 +148,22 @@ export default function BuyerCreateOrder() {
 
       console.log('BuyerCreateOrder: Submitting order data', orderData);
 
-      // For now, show success message
+      const response = await fetch(`${BACKEND_URL}/api/buyers/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create order');
+      }
+
+      const result = await response.json();
+      console.log('BuyerCreateOrder: Order created successfully', result);
+
       Alert.alert('Success', 'Order created successfully!', [
         {
           text: 'OK',
@@ -159,9 +175,9 @@ export default function BuyerCreateOrder() {
           },
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('BuyerCreateOrder: Error submitting order:', error);
-      Alert.alert('Error', 'Failed to create order. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to create order. Please try again.');
     } finally {
       setLoading(false);
     }

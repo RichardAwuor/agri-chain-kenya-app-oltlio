@@ -309,6 +309,93 @@ export const api = {
     console.log('API: Major airports fetched successfully', data);
     return data;
   },
+
+  // Regulator endpoints
+  registerRegulator: () => `${BACKEND_URL}/api/regulators/register`,
+  
+  getNearbyFarmers: (lat: number, lng: number, radius?: number) => {
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      ...(radius && { radius: radius.toString() }),
+    });
+    return `${BACKEND_URL}/api/regulators/nearby-farmers?${params}`;
+  },
+
+  createRegulatorVisit: () => `${BACKEND_URL}/api/regulator-visits`,
+  
+  getRegulatorVisits: (regulatorId: string) => `${BACKEND_URL}/api/regulator-visits/${regulatorId}`,
+  
+  getRegulatorDashboard: (regulatorId: string, startDate: string, endDate: string) => {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+    return `${BACKEND_URL}/api/regulator-visits/${regulatorId}/dashboard?${params}`;
+  },
+
+  // Service Provider endpoints
+  registerServiceProvider: () => `${BACKEND_URL}/api/service-providers/register`,
+  
+  createServiceProviderVisit: () => `${BACKEND_URL}/api/service-providers/visits`,
+  
+  getServiceProviderVisits: (serviceProviderId: string) => `${BACKEND_URL}/api/service-providers/visits/${serviceProviderId}`,
+  
+  getServiceProviderDashboard: (serviceProviderId: string, startDate: string, endDate: string) => {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+    return `${BACKEND_URL}/api/service-providers/dashboard/${serviceProviderId}?${params}`;
+  },
+
+  getNearbyFarmersForServiceProvider: (lat: number, lng: number, radius?: number) => {
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      ...(radius && { radius: radius.toString() }),
+    });
+    return `${BACKEND_URL}/api/service-providers/nearby-farmers?${params}`;
+  },
+
+  // Buyer endpoints
+  registerBuyer: () => `${BACKEND_URL}/api/buyers/register`,
+  
+  createBuyerOrder: () => `${BACKEND_URL}/api/buyers/orders`,
+  
+  getBuyerOrders: (buyerId: string) => `${BACKEND_URL}/api/buyers/orders/${buyerId}`,
+  
+  getBuyerDashboard: (buyerId: string, startDate: string, endDate: string) => {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+    return `${BACKEND_URL}/api/buyers/dashboard/${buyerId}?${params}`;
+  },
+
+  // Upload endpoints
+  uploadImage: () => `${BACKEND_URL}/api/upload/work-id`,
+  uploadWorkId: () => `${BACKEND_URL}/api/upload/work-id`,
+  uploadVisitPhoto: () => `${BACKEND_URL}/api/upload/visit-photo`,
+
+  // Generic dropdown data endpoint
+  getDropdownData: (path: string) => `${BACKEND_URL}/api/dropdown-data/${path}`,
+
+  // Regulator-specific endpoints (for direct fetch calls)
+  getRegulatorOrganizations: async () => {
+    console.log('API: Fetching regulator organizations');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/regulator-organizations`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get regulator organizations failed', error);
+      throw new Error(`Failed to get regulator organizations: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Regulator organizations fetched successfully', data);
+    return data;
+  },
 };
 
 export default api;
