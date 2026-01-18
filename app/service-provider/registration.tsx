@@ -69,14 +69,10 @@ export default function ServiceProviderRegistration() {
       console.log('ServiceProviderRegistration: Loading dropdown data');
       const { default: api } = await import('@/utils/api');
       
-      // TODO: Backend Integration - GET /api/dropdown-data/service-provider-organizations
-      const orgsResponse = await fetch(`${api.BACKEND_URL || 'https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev'}/api/dropdown-data/service-provider-organizations`);
-      const orgsData = await orgsResponse.json();
+      const orgsData = await api.getServiceProviderOrganizations();
       setOrganizations(orgsData);
 
-      // TODO: Backend Integration - GET /api/dropdown-data/core-mandates
-      const mandatesResponse = await fetch(`${api.BACKEND_URL || 'https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev'}/api/dropdown-data/core-mandates`);
-      const mandatesData = await mandatesResponse.json();
+      const mandatesData = await api.getCoreMandates();
       setMandates(mandatesData);
 
       console.log('ServiceProviderRegistration: Dropdown data loaded', { orgsData, mandatesData });

@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Activit
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CROP_MATRIX, calculateProjectedHarvest as calculateHarvest } from "@/constants/PlusKenyaBranding";
 
 interface UserData {
   id?: string;
@@ -29,7 +30,12 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editedCropType, setEditedCropType] = useState('');
-  const [projectedHarvest, setProjectedHarvest] = useState<number | null>(null);
+  const [projectedHarvest, setProjectedHarvest] = useState<{
+    volumeLbs: number;
+    volumeKg: number;
+    revenuePerSeason: number;
+    farmerEarningPerMonth: number;
+  } | null>(null);
 
   useEffect(() => {
     console.log('ProfileScreen: Loading user data');
@@ -45,12 +51,11 @@ export default function ProfileScreen() {
         setUserData(data);
         setEditedCropType(data.cropType);
         
-        // Fetch projected harvest from backend if user is a producer
-        if (data.userType === 'producer') {
-          await fetchProjectedHarvest(data.id);
-        } else {
-          // Fallback to local calculation for non-producers
-          calculateProjectedHarvest(data.cropType, data.farmAcreage);
+        // Calculate projected harvest using crop matrix
+        if (data.userType === 'producer' && data.cropType && data.farmAcreage) {
+          const harvest = calculateHarvest(data.cropType, data.farmAcreage);
+          console.log('ProfileScreen: Projected harvest calculated', harvest);
+          setProjectedHarvest(harvest);
         }
       }
     } catch (error) {
@@ -58,39 +63,6 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchProjectedHarvest = async (userId: string) => {
-    try {
-      console.log('ProfileScreen: Fetching projected harvest from backend for user', userId);
-      const { default: api } = await import('@/utils/api');
-      const result = await api.getProjectedHarvest(userId);
-      console.log('ProfileScreen: Projected harvest fetched from backend', result);
-      setProjectedHarvest(result.projectedVolumeKg || 0);
-    } catch (error) {
-      console.error('ProfileScreen: Error fetching projected harvest from backend:', error);
-      // Fallback to local calculation if API fails
-      if (userData) {
-        calculateProjectedHarvest(userData.cropType, userData.farmAcreage);
-      }
-    }
-  };
-
-  const calculateProjectedHarvest = (cropType: string, acreage: number) => {
-    console.log('ProfileScreen: Calculating projected harvest locally', { cropType, acreage });
-    const cropMatrix: { [key: string]: number } = {
-      'Maize': 2000,
-      'Beans': 800,
-      'Potatoes': 15000,
-      'Tomatoes': 20000,
-      'Cabbage': 25000,
-      'Other': 1000,
-    };
-
-    const yieldPerAcre = cropMatrix[cropType] || 1000;
-    const projected = yieldPerAcre * acreage;
-    console.log('ProfileScreen: Projected harvest calculated locally', projected);
-    setProjectedHarvest(projected);
   };
 
   const handleSaveCropType = async () => {
@@ -107,12 +79,10 @@ export default function ProfileScreen() {
         console.log('ProfileScreen: Updating crop type via API', { userId, cropType: editedCropType });
         await api.updateUser(userId, { cropType: editedCropType });
         
-        // Fetch updated projected harvest from backend
-        if (userData.userType === 'producer') {
-          await fetchProjectedHarvest(userId);
-        } else {
-          calculateProjectedHarvest(editedCropType, userData.farmAcreage);
-        }
+        // Recalculate projected harvest with new crop type
+        const harvest = calculateHarvest(editedCropType, userData.farmAcreage);
+        console.log('ProfileScreen: Projected harvest recalculated', harvest);
+        setProjectedHarvest(harvest);
       }
 
       const updatedData = { ...userData, cropType: editedCropType };
@@ -156,7 +126,8 @@ export default function ProfileScreen() {
     );
   }
 
-  const cropTypes = ['Maize', 'Beans', 'Potatoes', 'Tomatoes', 'Cabbage', 'Other'];
+  // Get crop types from crop matrix
+  const cropTypes = CROP_MATRIX.map(crop => crop.cropName);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -311,7 +282,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {projectedHarvest !== null && (
+        {projectedHarvest && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <IconSymbol
@@ -323,8 +294,27 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>Projected Harvest</Text>
             </View>
             <View style={[styles.card, styles.highlightCard]}>
-              <Text style={styles.harvestValue}>{projectedHarvest.toLocaleString()} KG</Text>
-              <Text style={styles.harvestLabel}>
+              <View style={styles.harvestRow}>
+                <View style={styles.harvestItem}>
+                  <Text style={styles.harvestValue}>{projectedHarvest.volumeKg.toLocaleString(undefined, { maximumFractionDigits: 0 })} KG</Text>
+                  <Text style={styles.harvestLabel}>Volume</Text>
+                </View>
+                <View style={styles.harvestItem}>
+                  <Text style={styles.harvestValue}>{projectedHarvest.volumeLbs.toLocaleString(undefined, { maximumFractionDigits: 0 })} LBS</Text>
+                  <Text style={styles.harvestLabel}>Volume</Text>
+                </View>
+              </View>
+              <View style={styles.harvestRow}>
+                <View style={styles.harvestItem}>
+                  <Text style={styles.harvestValue}>${projectedHarvest.revenuePerSeason.toLocaleString()}</Text>
+                  <Text style={styles.harvestLabel}>Revenue/Season</Text>
+                </View>
+                <View style={styles.harvestItem}>
+                  <Text style={styles.harvestValue}>${projectedHarvest.farmerEarningPerMonth.toLocaleString()}</Text>
+                  <Text style={styles.harvestLabel}>Earning/Month</Text>
+                </View>
+              </View>
+              <Text style={styles.harvestFooter}>
                 Based on {userData.farmAcreage} acres of {userData.cropType}
               </Text>
             </View>
@@ -339,7 +329,7 @@ export default function ProfileScreen() {
             color={colors.primary}
           />
           <Text style={styles.infoText}>
-            You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type.
+            You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type using the PLUS-Kenya crop matrix.
           </Text>
         </View>
       </ScrollView>
@@ -500,17 +490,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.card,
   },
+  harvestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  harvestItem: {
+    alignItems: 'center',
+  },
   harvestValue: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   harvestLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  harvestFooter: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   infoBox: {
     flexDirection: 'row',

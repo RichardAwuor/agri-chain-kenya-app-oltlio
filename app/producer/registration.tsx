@@ -57,12 +57,12 @@ export default function ProducerRegistration() {
   const [showSubCountyPicker, setShowSubCountyPicker] = useState(false);
   const [showWardPicker, setShowWardPicker] = useState(false);
   const [showCropPicker, setShowCropPicker] = useState(false);
-
-  const cropTypes = ['Maize', 'Beans', 'Potatoes', 'Tomatoes', 'Cabbage', 'Other'];
+  const [cropTypes, setCropTypes] = useState<string[]>([]);
 
   useEffect(() => {
-    console.log('ProducerRegistration: Component mounted, loading counties');
+    console.log('ProducerRegistration: Component mounted, loading counties and crop types');
     loadCounties();
+    loadCropTypes();
   }, []);
 
   const loadCounties = async () => {
@@ -77,6 +77,20 @@ export default function ProducerRegistration() {
     } catch (error) {
       console.error('ProducerRegistration: Error loading counties:', error);
       Alert.alert('Error', 'Failed to load counties. Please try again.');
+    }
+  };
+
+  const loadCropTypes = async () => {
+    console.log('ProducerRegistration: Loading crop types from backend');
+    try {
+      const { default: api } = await import('@/utils/api');
+      const types = await api.getCropTypes();
+      // Filter out NONE option for producers
+      setCropTypes(types.filter((crop: string) => crop !== 'NONE'));
+    } catch (error) {
+      console.error('ProducerRegistration: Error loading crop types:', error);
+      // Fallback to default crop types
+      setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato']);
     }
   };
 

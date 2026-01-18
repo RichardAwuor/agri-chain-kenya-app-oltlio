@@ -1,19 +1,29 @@
+
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
+// PLUS-Kenya Brand Colors: Black, Red, Green, White
+// Slogan: Integrating Kenya into global trade
 export const colors = {
-  primary: '#2E7D32',      // Forest Green - agricultural theme
-  secondary: '#558B2F',    // Olive Green
-  accent: '#81C784',       // Light Green
-  background: '#FAFAFA',   // Light background for readability
-  backgroundAlt: '#F5F5F5', // Slightly darker light background
-  text: '#212121',         // Dark text for light background
-  textSecondary: '#757575', // Secondary text
+  primary: '#006400',      // Dark Green (Kenya flag green)
+  secondary: '#DC143C',    // Crimson Red (Kenya flag red)
+  accent: '#228B22',       // Forest Green
+  background: '#FFFFFF',   // White background
+  backgroundAlt: '#F5F5F5', // Light gray for cards
+  text: '#000000',         // Black text
+  textSecondary: '#4A4A4A', // Dark gray for secondary text
+  textLight: '#FFFFFF',    // White text for dark backgrounds
   card: '#FFFFFF',         // White cards
   border: '#E0E0E0',       // Light border
-  error: '#D32F2F',        // Red for errors
-  success: '#388E3C',      // Green for success
-  warning: '#F57C00',      // Orange for warnings
+  error: '#DC143C',        // Red for errors (using brand red)
+  success: '#006400',      // Dark green for success (using brand green)
+  warning: '#FF8C00',      // Dark orange for warnings
   highlight: '#FFF9C4',    // Light yellow highlight
+  
+  // PLUS-Kenya specific brand colors
+  kenyaGreen: '#006400',   // Kenya flag green
+  kenyaRed: '#DC143C',     // Kenya flag red
+  kenyaBlack: '#000000',   // Kenya flag black
+  kenyaWhite: '#FFFFFF',   // Kenya flag white
 };
 
 export const buttonStyles = StyleSheet.create({
@@ -77,7 +87,7 @@ export const commonStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,

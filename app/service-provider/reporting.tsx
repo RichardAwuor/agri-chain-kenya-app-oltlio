@@ -72,14 +72,13 @@ export default function ServiceProviderReporting() {
   const loadCropTypes = async () => {
     try {
       console.log('ServiceProviderReporting: Loading crop types');
-      // TODO: Backend Integration - GET /api/dropdown-data/crop-types
-      const response = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/crop-types');
-      const data = await response.json();
+      const { default: api } = await import('@/utils/api');
+      const data = await api.getCropTypes();
       setCropTypes(data);
       console.log('ServiceProviderReporting: Crop types loaded', data);
     } catch (error) {
       console.error('ServiceProviderReporting: Error loading crop types:', error);
-      setCropTypes(['Avocado', 'Mango', 'Passion Fruit', 'Pineapple', 'Banana', 'NONE']);
+      setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato', 'NONE']);
     }
   };
 
@@ -111,9 +110,9 @@ export default function ServiceProviderReporting() {
   const loadNearbyFarmers = async (lat: number, lng: number) => {
     try {
       console.log('ServiceProviderReporting: Loading nearby farmers', { lat, lng });
-      // TODO: Backend Integration - GET /api/service-providers/nearby-farmers?lat=X&lng=Y&radius=5000
+      const { BACKEND_URL } = await import('@/utils/api');
       const response = await fetch(
-        `https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/service-providers/nearby-farmers?lat=${lat}&lng=${lng}&radius=5000`
+        `${BACKEND_URL}/api/service-providers/nearby-farmers?lat=${lat}&lng=${lng}&radius=5000`
       );
       const data = await response.json();
       setNearbyFarmers(data);

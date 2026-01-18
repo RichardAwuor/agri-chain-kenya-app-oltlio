@@ -74,9 +74,9 @@ export default function BuyerDashboard() {
         endDate: endDate.toISOString(),
       });
 
-      // TODO: Backend Integration - GET /api/buyers/dashboard/:buyerId?startDate=X&endDate=Y
+      const { BACKEND_URL } = await import('@/utils/api');
       const response = await fetch(
-        `https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/buyers/dashboard/${buyerId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        `${BACKEND_URL}/api/buyers/dashboard/${buyerId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
       );
       
       if (response.ok) {

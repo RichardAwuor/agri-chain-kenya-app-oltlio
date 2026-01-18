@@ -69,15 +69,14 @@ export default function BuyerCreateOrder() {
   const loadCropTypes = async () => {
     try {
       console.log('BuyerCreateOrder: Loading crop types');
-      // TODO: Backend Integration - GET /api/dropdown-data/crop-types
-      const response = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/crop-types');
-      const data = await response.json();
+      const { default: api } = await import('@/utils/api');
+      const data = await api.getCropTypes();
       // Filter out NONE
       setCropTypes(data.filter((crop: string) => crop !== 'NONE'));
       console.log('BuyerCreateOrder: Crop types loaded', data);
     } catch (error) {
       console.error('BuyerCreateOrder: Error loading crop types:', error);
-      setCropTypes(['Avocado', 'Mango', 'Passion Fruit', 'Pineapple', 'Banana']);
+      setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato']);
     }
   };
 

@@ -5,6 +5,9 @@ const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'https://efny4tuj
 
 console.log('API: Backend URL configured as', BACKEND_URL);
 
+// Export BACKEND_URL for use in other files
+export { BACKEND_URL };
+
 export const api = {
   // User Management
   async registerUser(userData: {
@@ -213,6 +216,97 @@ export const api = {
 
     const data = await response.json();
     console.log('API: Projected harvest fetched successfully', data);
+    return data;
+  },
+
+  // Dropdown Data
+  async getCropTypes() {
+    console.log('API: Fetching crop types');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/crop-types`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get crop types failed', error);
+      throw new Error(`Failed to get crop types: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Crop types fetched successfully', data);
+    return data;
+  },
+
+  async getCropMatrix() {
+    console.log('API: Fetching crop matrix');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/crop-matrix`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get crop matrix failed', error);
+      throw new Error(`Failed to get crop matrix: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Crop matrix fetched successfully', data);
+    return data;
+  },
+
+  async getBuyerOrganizations() {
+    console.log('API: Fetching buyer organizations');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/buyer-organizations`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get buyer organizations failed', error);
+      throw new Error(`Failed to get buyer organizations: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Buyer organizations fetched successfully', data);
+    return data;
+  },
+
+  async getServiceProviderOrganizations() {
+    console.log('API: Fetching service provider organizations');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/service-provider-organizations`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get service provider organizations failed', error);
+      throw new Error(`Failed to get service provider organizations: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Service provider organizations fetched successfully', data);
+    return data;
+  },
+
+  async getCoreMandates() {
+    console.log('API: Fetching core mandates');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/core-mandates`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get core mandates failed', error);
+      throw new Error(`Failed to get core mandates: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Core mandates fetched successfully', data);
+    return data;
+  },
+
+  async getMajorAirports() {
+    console.log('API: Fetching major airports');
+    const response = await fetch(`${BACKEND_URL}/api/dropdown-data/major-airports`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get major airports failed', error);
+      throw new Error(`Failed to get major airports: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Major airports fetched successfully', data);
     return data;
   },
 };

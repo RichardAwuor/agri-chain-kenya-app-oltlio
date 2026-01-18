@@ -52,15 +52,12 @@ export default function BuyerRegistration() {
   const loadDropdownData = async () => {
     try {
       console.log('BuyerRegistration: Loading dropdown data');
+      const { default: api } = await import('@/utils/api');
       
-      // TODO: Backend Integration - GET /api/dropdown-data/buyer-organizations
-      const orgsResponse = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/buyer-organizations');
-      const orgsData = await orgsResponse.json();
+      const orgsData = await api.getBuyerOrganizations();
       setOrganizations(orgsData);
 
-      // TODO: Backend Integration - GET /api/dropdown-data/major-airports
-      const airportsResponse = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/major-airports');
-      const airportsData = await airportsResponse.json();
+      const airportsData = await api.getMajorAirports();
       setAirports(airportsData);
 
       console.log('BuyerRegistration: Dropdown data loaded', { orgsData, airportsData });

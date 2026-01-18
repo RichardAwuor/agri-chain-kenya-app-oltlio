@@ -81,9 +81,9 @@ export default function ServiceProviderDashboard() {
         endDate: endDate.toISOString(),
       });
 
-      // TODO: Backend Integration - GET /api/service-providers/dashboard/:serviceProviderId?startDate=X&endDate=Y
+      const { BACKEND_URL } = await import('@/utils/api');
       const response = await fetch(
-        `https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/service-providers/dashboard/${serviceProviderId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        `${BACKEND_URL}/api/service-providers/dashboard/${serviceProviderId}?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
       );
       
       if (response.ok) {

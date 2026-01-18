@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from "react-native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { router } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PLUS_KENYA_BRANDING } from "@/constants/PlusKenyaBranding";
 
 type UserType = 'producer' | 'regulator' | 'service_provider' | 'buyer' | null;
 
@@ -96,28 +98,28 @@ export default function HomeScreen() {
       title: 'Producer',
       description: 'Register your farm and report agricultural activities',
       icon: 'agriculture',
-      color: '#2E7D32',
+      color: colors.kenyaGreen,
     },
     {
       type: 'regulator' as UserType,
       title: 'Regulator',
       description: 'Monitor farms and ensure compliance',
       icon: 'verified',
-      color: '#1976D2',
+      color: colors.kenyaRed,
     },
     {
       type: 'service_provider' as UserType,
       title: 'Service Provider',
       description: 'Provide agricultural services to farmers',
       icon: 'build',
-      color: '#F57C00',
+      color: colors.kenyaGreen,
     },
     {
       type: 'buyer' as UserType,
       title: 'Buyer',
       description: 'Create orders and purchase agricultural products',
       icon: 'shopping-cart',
-      color: '#7B1FA2',
+      color: colors.kenyaRed,
     },
   ];
 
@@ -127,7 +129,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Logo */}
+        {/* Header with Logo and Slogan */}
         <View style={styles.header}>
           <Image 
             source={{ uri: 'https://prod-finalquest-user-projects-storage-bucket-aws.s3.amazonaws.com/user-projects/7bda0412-f420-4692-bde4-caf98ff36e25/assets/images/c9f89323-d01b-43ca-9fd4-6755e767fcab.png' }}
@@ -135,8 +137,12 @@ export default function HomeScreen() {
             resizeMode="contain"
           />
           <Text style={styles.title}>PLUS-Kenya</Text>
-          <Text style={styles.subtitle}>Agricultural Supply Chain Coordination</Text>
-          <Text style={styles.tagline}>MAR 2026 • INTEGRATE</Text>
+          <Text style={styles.slogan}>{PLUS_KENYA_BRANDING.slogan}</Text>
+          <View style={styles.flagColors}>
+            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.black }]} />
+            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.red }]} />
+            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.green }]} />
+          </View>
         </View>
 
         {/* User Type Selection */}
@@ -182,7 +188,7 @@ export default function HomeScreen() {
             Powered by PLUS-Kenya Initiative
           </Text>
           <Text style={styles.footerSubtext}>
-            Connecting farmers, regulators, and buyers
+            Connecting farmers, regulators, service providers, and buyers
           </Text>
         </View>
       </ScrollView>
@@ -217,17 +223,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: 1,
   },
-  subtitle: {
+  slogan: {
     fontSize: 16,
-    color: colors.textSecondary,
+    color: colors.kenyaGreen,
     textAlign: 'center',
-    marginBottom: 4,
-  },
-  tagline: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    letterSpacing: 2,
     fontWeight: '600',
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  flagColors: {
+    flexDirection: 'row',
+    width: 200,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  flagStripe: {
+    flex: 1,
   },
   selectionContainer: {
     marginBottom: 32,
@@ -297,5 +310,6 @@ const styles = StyleSheet.create({
   footerSubtext: {
     fontSize: 12,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
