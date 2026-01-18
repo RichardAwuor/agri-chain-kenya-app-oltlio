@@ -1,7 +1,8 @@
+
 {
   "expo": {
     "name": "AgriChain Kenya",
-    "slug": "AgriChain Kenya",
+    "slug": "agrichain-kenya",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
@@ -14,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Natively",
+      "bundleIdentifier": "com.pluskenya.agrichain",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,7 +26,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.pluskenya.agrichain"
     },
     "web": {
       "favicon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
@@ -36,7 +37,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "natively",
+    "scheme": "agrichain-kenya",
     "experiments": {
       "typedRoutes": true
     },
@@ -44,6 +45,5 @@
       "router": {},
       "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
     }
-  },
-  "scheme": "AgriChain Kenya"
+  }
 }
