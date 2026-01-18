@@ -132,7 +132,7 @@ export default function HomeScreen() {
         {/* Header with Logo and Slogan */}
         <View style={styles.header}>
           <Image 
-            source={require('@/assets/images/0e340602-174b-4b22-bccd-82d159adc307.png')}
+            source={require('@/assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -300,6 +300,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    marginBottom: 20,
   },
   footerText: {
     fontSize: 14,
