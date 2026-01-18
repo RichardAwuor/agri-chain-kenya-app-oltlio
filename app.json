@@ -1,10 +1,11 @@
+
 {
   "expo": {
     "name": "PLUS-Kenya",
-    "slug": "plus-kenya",
+    "slug": "PLUS-Kenya",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
+    "icon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -21,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
+        "foregroundImage": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.pluskenya.agrichain"
     },
     "web": {
-      "favicon": "./assets/images/e689bfa6-71aa-468d-9858-e48b89b0cf3b.png",
+      "favicon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -44,5 +45,6 @@
       "router": {},
       "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
     }
-  }
+  },
+  "scheme": "PLUS-Kenya"
 }
