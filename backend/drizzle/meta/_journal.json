@@ -8,6 +8,13 @@
       "when": 1768720834564,
       "tag": "20260118072034_smooth_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768722219474,
+      "tag": "20260118074339_large_black_crow",
+      "breakpoints": true
     }
   ]
 }

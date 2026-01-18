@@ -7,6 +7,9 @@ import { registerRegulatorVisitRoutes } from './routes/regulator-visits.js';
 import { registerBuyerOrderRoutes } from './routes/buyer-orders.js';
 import { registerUploadRoutes } from './routes/upload.js';
 import { registerSeedRoutes } from './routes/seed.js';
+import { registerServiceProviderRoutes } from './routes/service-providers.js';
+import { registerBuyerRoutes } from './routes/buyers.js';
+import { registerDropdownDataRoutes } from './routes/dropdown-data.js';
 
 // Create application with schema for full database type support
 export const app = await createApplication(schema);
@@ -25,6 +28,9 @@ registerRegulatorVisitRoutes(app);
 registerBuyerOrderRoutes(app);
 registerUploadRoutes(app);
 registerSeedRoutes(app);
+registerServiceProviderRoutes(app);
+registerBuyerRoutes(app);
+registerDropdownDataRoutes(app);
 
 await app.run();
 app.logger.info('Agricultural supply chain application started');

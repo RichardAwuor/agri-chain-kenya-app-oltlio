@@ -9,6 +9,7 @@ import {
   date,
   unique,
   index,
+  numeric,
 } from 'drizzle-orm/pg-core';
 
 // Users table with support for 4 user types
@@ -36,6 +37,14 @@ export const users = pgTable(
     workIdFrontUrl: text('work_id_front_url'),
     workIdBackUrl: text('work_id_back_url'),
     registrationCompleted: boolean('registration_completed').default(false),
+    // Service provider fields
+    coreMandates: text('core_mandates').array(),
+    // Buyer fields
+    mainOfficeAddress: text('main_office_address'),
+    officeState: text('office_state'),
+    officeCity: text('office_city'),
+    officeZipCode: text('office_zip_code'),
+    deliveryAirport: text('delivery_airport'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -118,12 +127,61 @@ export const buyerOrders = pgTable(
     quantityKg: decimal('quantity_kg', { precision: 12, scale: 2 }).notNull(),
     deliveryDate: date('delivery_date').notNull(),
     status: text('status').default('pending'), // 'pending', 'confirmed', 'delivered', 'cancelled'
+    estimatedInvoiceAmount: numeric('estimated_invoice_amount', { precision: 12, scale: 2 }),
+    farmerPayment: numeric('farmer_payment', { precision: 12, scale: 2 }), // 40%
+    serviceProviderPayment: numeric('service_provider_payment', { precision: 12, scale: 2 }), // 40%
+    gokPayment: numeric('gok_payment', { precision: 12, scale: 2 }), // 20%
+    deliveryAirport: text('delivery_airport'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
     buyerIdIdx: index('idx_buyer_orders_buyer_id').on(table.buyerId),
     statusIdx: index('idx_buyer_orders_status').on(table.status),
+  })
+);
+
+// Service provider visits table
+export const serviceProviderVisits = pgTable(
+  'service_provider_visits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    serviceProviderId: uuid('service_provider_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    producerId: uuid('producer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    visitDate: timestamp('visit_date').notNull(),
+    visitLat: numeric('visit_lat', { precision: 10, scale: 8 }).notNull(),
+    visitLng: numeric('visit_lng', { precision: 11, scale: 8 }).notNull(),
+    collectionEstimationWeek: integer('collection_estimation_week'),
+    collectedCropType: text('collected_crop_type'),
+    collectedVolumeKg: numeric('collected_volume_kg', { precision: 12, scale: 2 }),
+    shippedCropType: text('shipped_crop_type'),
+    shippedVolumeKg: numeric('shipped_volume_kg', { precision: 12, scale: 2 }),
+    comments: text('comments'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    serviceProviderIdIdx: index('idx_sp_visits_sp_id').on(table.serviceProviderId),
+    producerIdIdx: index('idx_sp_visits_producer_id').on(table.producerId),
+  })
+);
+
+// Service provider visit photos table
+export const serviceProviderVisitPhotos = pgTable(
+  'service_provider_visit_photos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    visitId: uuid('visit_id')
+      .notNull()
+      .references(() => serviceProviderVisits.id, { onDelete: 'cascade' }),
+    photoUrl: text('photo_url').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    visitIdIdx: index('idx_sp_visit_photos_visit_id').on(table.visitId),
   })
 );
 
