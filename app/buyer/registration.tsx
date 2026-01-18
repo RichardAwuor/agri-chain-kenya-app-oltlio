@@ -1,11 +1,444 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useState, useEffect } from 'react';
 import { colors } from '@/styles/commonStyles';
+import * as ImagePicker from 'expo-image-picker';
+import { Stack, router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function BuyerRegistration() {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  // Form data
+  const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  const [workIdFront, setWorkIdFront] = useState<string | null>(null);
+  const [workIdBack, setWorkIdBack] = useState<string | null>(null);
+  const [mainOfficeAddress, setMainOfficeAddress] = useState('');
+  const [officeState, setOfficeState] = useState('');
+  const [officeCity, setOfficeCity] = useState('');
+  const [officeZipCode, setOfficeZipCode] = useState('');
+  const [deliveryAirport, setDeliveryAirport] = useState('');
+
+  // Dropdown data
+  const [organizations, setOrganizations] = useState<string[]>([]);
+  const [airports, setAirports] = useState<string[]>([]);
+
+  // Dropdown visibility
+  const [showOrganizationDropdown, setShowOrganizationDropdown] = useState(false);
+  const [showAirportDropdown, setShowAirportDropdown] = useState(false);
+
+  useEffect(() => {
+    console.log('BuyerRegistration: Component mounted');
+    loadDropdownData();
+  }, []);
+
+  const loadDropdownData = async () => {
+    try {
+      console.log('BuyerRegistration: Loading dropdown data');
+      
+      // TODO: Backend Integration - GET /api/dropdown-data/buyer-organizations
+      const orgsResponse = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/buyer-organizations');
+      const orgsData = await orgsResponse.json();
+      setOrganizations(orgsData);
+
+      // TODO: Backend Integration - GET /api/dropdown-data/major-airports
+      const airportsResponse = await fetch('https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev/api/dropdown-data/major-airports');
+      const airportsData = await airportsResponse.json();
+      setAirports(airportsData);
+
+      console.log('BuyerRegistration: Dropdown data loaded', { orgsData, airportsData });
+    } catch (error) {
+      console.error('BuyerRegistration: Error loading dropdown data:', error);
+      // Fallback data
+      setOrganizations([
+        'Costco wholesale',
+        'Walmart',
+        'Whole Foods Market',
+        'The Kroger Co.',
+        'Sprouts Farmers Market',
+        "Trader Joe's",
+        'Albertsons Co.',
+        'Target',
+        'Publix Super Markets',
+        'ALDI',
+      ]);
+      setAirports([
+        'Jomo Kenyatta International Airport (NBO)',
+        'Moi International Airport (MBA)',
+        'Kisumu International Airport (KIS)',
+        'Eldoret International Airport (EDL)',
+      ]);
+    }
+  };
+
+  const pickImage = async (type: 'front' | 'back') => {
+    console.log('BuyerRegistration: Picking image for', type);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      if (type === 'front') {
+        setWorkIdFront(result.assets[0].uri);
+      } else {
+        setWorkIdBack(result.assets[0].uri);
+      }
+      console.log('BuyerRegistration: Image selected', type);
+    }
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return false;
+    }
+
+    // Check for free email domains
+    const freeEmailDomains = [
+      'gmail.com',
+      'yahoo.com',
+      'hotmail.com',
+      'outlook.com',
+      'aol.com',
+      'icloud.com',
+      'mail.com',
+      'protonmail.com',
+      'zoho.com',
+    ];
+    const domain = email.split('@')[1].toLowerCase();
+    return !freeEmailDomains.includes(domain);
+  };
+
+  const validateStep1 = (): boolean => {
+    if (!email.trim()) {
+      Alert.alert('Validation Error', 'Please enter your work email');
+      return false;
+    }
+    if (!validateEmail(email)) {
+      Alert.alert('Validation Error', 'Please use a paid work email domain (not gmail, yahoo, etc.)');
+      return false;
+    }
+    if (email !== confirmEmail) {
+      Alert.alert('Validation Error', 'Emails do not match');
+      return false;
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert('Validation Error', 'Please enter your first and last name');
+      return false;
+    }
+    if (!organizationName) {
+      Alert.alert('Validation Error', 'Please select an organization');
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = (): boolean => {
+    if (!workIdFront || !workIdBack) {
+      Alert.alert('Validation Error', 'Please upload both front and back of your work ID');
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = (): boolean => {
+    if (!mainOfficeAddress.trim() || !officeState.trim() || !officeCity.trim() || !officeZipCode.trim()) {
+      Alert.alert('Validation Error', 'Please fill in all office address fields');
+      return false;
+    }
+    if (!deliveryAirport) {
+      Alert.alert('Validation Error', 'Please select a delivery airport');
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    console.log('BuyerRegistration: Moving to next step', step);
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+    if (step === 3 && !validateStep3()) return;
+
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    console.log('BuyerRegistration: Moving to previous step', step);
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    console.log('BuyerRegistration: Submitting registration');
+    setLoading(true);
+
+    try {
+      // TODO: Backend Integration - POST /api/buyers/register with multipart form data
+      // For now, we'll use the existing user registration endpoint
+      const { default: api } = await import('@/utils/api');
+      
+      const userData = {
+        userType: 'buyer',
+        email,
+        firstName,
+        lastName,
+        organizationName,
+        county: 'N/A', // Buyers don't have county
+        subCounty: 'N/A',
+        ward: 'N/A',
+        workIdFrontUrl: workIdFront || undefined,
+        workIdBackUrl: workIdBack || undefined,
+      };
+
+      console.log('BuyerRegistration: Registering user', userData);
+      const result = await api.registerUser(userData);
+
+      // Save to AsyncStorage
+      await AsyncStorage.setItem('userId', result.user.id);
+      await AsyncStorage.setItem('userType', 'buyer');
+      await AsyncStorage.setItem('userData', JSON.stringify(result.user));
+      await AsyncStorage.setItem('registrationCompleted', 'true');
+
+      console.log('BuyerRegistration: Registration successful', result.user.id);
+      Alert.alert('Success', 'Registration completed successfully!', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/buyer/dashboard'),
+        },
+      ]);
+    } catch (error) {
+      console.error('BuyerRegistration: Registration failed:', error);
+      Alert.alert('Error', 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStep1 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Personal Information</Text>
+
+      <Text style={styles.label}>Work Email *</Text>
+      <TextInput
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+        placeholder="your.name@company.com"
+        placeholderTextColor={colors.textSecondary}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <Text style={styles.label}>Re-enter Email *</Text>
+      <TextInput
+        style={styles.input}
+        value={confirmEmail}
+        onChangeText={setConfirmEmail}
+        placeholder="Confirm your email"
+        placeholderTextColor={colors.textSecondary}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <Text style={styles.label}>First Name *</Text>
+      <TextInput
+        style={styles.input}
+        value={firstName}
+        onChangeText={setFirstName}
+        placeholder="Enter first name"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      <Text style={styles.label}>Last Name *</Text>
+      <TextInput
+        style={styles.input}
+        value={lastName}
+        onChangeText={setLastName}
+        placeholder="Enter last name"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      <Text style={styles.label}>Organization Name *</Text>
+      <TouchableOpacity
+        style={styles.dropdown}
+        onPress={() => setShowOrganizationDropdown(!showOrganizationDropdown)}
+      >
+        <Text style={organizationName ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {organizationName || 'Select organization'}
+        </Text>
+        <IconSymbol
+          ios_icon_name="chevron.down"
+          android_material_icon_name="arrow-drop-down"
+          size={24}
+          color={colors.textSecondary}
+        />
+      </TouchableOpacity>
+      {showOrganizationDropdown && (
+        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+          {organizations.map((org) => (
+            <TouchableOpacity
+              key={org}
+              style={styles.dropdownItem}
+              onPress={() => {
+                setOrganizationName(org);
+                setShowOrganizationDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{org}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  );
+
+  const renderStep2 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Work ID Upload</Text>
+      <Text style={styles.stepSubtitle}>Please upload clear photos of your work ID</Text>
+
+      <Text style={styles.label}>Work ID - Front *</Text>
+      <TouchableOpacity
+        style={styles.imageUploadButton}
+        onPress={() => pickImage('front')}
+      >
+        {workIdFront ? (
+          <Image source={{ uri: workIdFront }} style={styles.uploadedImage} />
+        ) : (
+          <View style={styles.uploadPlaceholder}>
+            <IconSymbol
+              ios_icon_name="camera"
+              android_material_icon_name="camera"
+              size={48}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.uploadText}>Tap to upload front</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      <Text style={styles.label}>Work ID - Back *</Text>
+      <TouchableOpacity
+        style={styles.imageUploadButton}
+        onPress={() => pickImage('back')}
+      >
+        {workIdBack ? (
+          <Image source={{ uri: workIdBack }} style={styles.uploadedImage} />
+        ) : (
+          <View style={styles.uploadPlaceholder}>
+            <IconSymbol
+              ios_icon_name="camera"
+              android_material_icon_name="camera"
+              size={48}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.uploadText}>Tap to upload back</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderStep3 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Office Address & Delivery</Text>
+
+      <Text style={styles.label}>Main Office Address *</Text>
+      <TextInput
+        style={styles.input}
+        value={mainOfficeAddress}
+        onChangeText={setMainOfficeAddress}
+        placeholder="Enter street address"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      <Text style={styles.label}>State *</Text>
+      <TextInput
+        style={styles.input}
+        value={officeState}
+        onChangeText={setOfficeState}
+        placeholder="Enter state"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      <Text style={styles.label}>City *</Text>
+      <TextInput
+        style={styles.input}
+        value={officeCity}
+        onChangeText={setOfficeCity}
+        placeholder="Enter city"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      <Text style={styles.label}>Zip Code *</Text>
+      <TextInput
+        style={styles.input}
+        value={officeZipCode}
+        onChangeText={setOfficeZipCode}
+        placeholder="Enter zip code"
+        placeholderTextColor={colors.textSecondary}
+        keyboardType="number-pad"
+      />
+
+      <Text style={styles.label}>Delivery Airport *</Text>
+      <TouchableOpacity
+        style={styles.dropdown}
+        onPress={() => setShowAirportDropdown(!showAirportDropdown)}
+      >
+        <Text style={deliveryAirport ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {deliveryAirport || 'Select delivery airport'}
+        </Text>
+        <IconSymbol
+          ios_icon_name="chevron.down"
+          android_material_icon_name="arrow-drop-down"
+          size={24}
+          color={colors.textSecondary}
+        />
+      </TouchableOpacity>
+      {showAirportDropdown && (
+        <View style={styles.dropdownList}>
+          {airports.map((airport) => (
+            <TouchableOpacity
+              key={airport}
+              style={styles.dropdownItem}
+              onPress={() => {
+                setDeliveryAirport(airport);
+                setShowAirportDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{airport}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -19,21 +452,55 @@ export default function BuyerRegistration() {
           headerTintColor: colors.card,
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.iconContainer}>
-          <IconSymbol
-            ios_icon_name="shopping.cart"
-            android_material_icon_name="shopping-cart"
-            size={64}
-            color={colors.primary}
+
+      {/* Progress Indicator */}
+      <View style={styles.progressContainer}>
+        {[1, 2, 3].map((s) => (
+          <View
+            key={s}
+            style={[
+              styles.progressDot,
+              s === step && styles.progressDotActive,
+              s < step && styles.progressDotCompleted,
+            ]}
           />
-        </View>
-        <Text style={styles.title}>Buyer Registration</Text>
-        <Text style={styles.subtitle}>Coming Soon</Text>
-        <Text style={styles.description}>
-          This feature is under development. Buyers will be able to register and create orders for agricultural products.
-        </Text>
+        ))}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {step === 1 && renderStep1()}
+        {step === 2 && renderStep2()}
+        {step === 3 && renderStep3()}
       </ScrollView>
+
+      {/* Navigation Buttons */}
+      <View style={styles.buttonContainer}>
+        {step > 1 && (
+          <TouchableOpacity
+            style={[styles.button, styles.buttonSecondary]}
+            onPress={handleBack}
+            disabled={loading}
+          >
+            <Text style={styles.buttonSecondaryText}>Back</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[styles.button, styles.buttonPrimary, step === 1 && styles.buttonFull]}
+          onPress={handleNext}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.card} />
+          ) : (
+            <Text style={styles.buttonPrimaryText}>
+              {step === 3 ? 'Complete Registration' : 'Next'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -43,34 +510,150 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    flex: 1,
-    padding: 20,
-    alignItems: 'center',
+  progressContainer: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 12,
   },
-  iconContainer: {
-    marginBottom: 24,
+  progressDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.border,
   },
-  title: {
-    fontSize: 28,
+  progressDotActive: {
+    backgroundColor: colors.primary,
+    width: 32,
+  },
+  progressDotCompleted: {
+    backgroundColor: colors.primary,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  stepContainer: {
+    gap: 16,
+  },
+  stepTitle: {
+    fontSize: 24,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
-    textAlign: 'center',
   },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.primary,
+  stepSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
     marginBottom: 16,
-    textAlign: 'center',
   },
-  description: {
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dropdown: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  dropdownPlaceholder: {
     fontSize: 16,
     color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 400,
+  },
+  dropdownList: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dropdownItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  imageUploadButton: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  uploadPlaceholder: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  uploadText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  uploadedImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  button: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonFull: {
+    flex: 1,
+  },
+  buttonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  buttonSecondary: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  buttonPrimaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.card,
+  },
+  buttonSecondaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
   },
 });
