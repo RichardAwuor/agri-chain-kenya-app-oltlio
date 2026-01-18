@@ -1,16 +1,17 @@
+
 {
   "expo": {
     "name": "AgriChain Kenya",
     "slug": "AgriChain Kenya",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#000000"
+        "foregroundImage": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively"
     },
     "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
+      "favicon": "./assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png",
       "bundler": "metro"
     },
     "plugins": [
