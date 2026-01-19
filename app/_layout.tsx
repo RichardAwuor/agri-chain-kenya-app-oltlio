@@ -1,3 +1,4 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -21,7 +22,7 @@ import { WidgetProvider } from "@/contexts/WidgetContext";
 SplashScreen.preventAutoHideAsync();
 
 export const unstable_settings = {
-  initialRouteName: "(tabs)", // Ensure any route can link back to `/`
+  initialRouteName: "welcome", // Start with welcome screen
 };
 
 export default function RootLayout() {
@@ -86,8 +87,102 @@ export default function RootLayout() {
           <WidgetProvider>
             <GestureHandlerRootView>
             <Stack>
+              {/* Welcome Screen - First screen users see */}
+              <Stack.Screen 
+                name="welcome" 
+                options={{ 
+                  headerShown: false,
+                  animation: 'fade',
+                }} 
+              />
+
               {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+
+              {/* Producer Screens */}
+              <Stack.Screen 
+                name="producer/registration" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="producer/reporting" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+
+              {/* Regulator Screens */}
+              <Stack.Screen 
+                name="regulator/registration" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="regulator/reporting" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="regulator/dashboard" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+
+              {/* Service Provider Screens */}
+              <Stack.Screen 
+                name="service-provider/registration" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="service-provider/reporting" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="service-provider/dashboard" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+
+              {/* Buyer Screens */}
+              <Stack.Screen 
+                name="buyer/registration" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="buyer/create-order" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
+              <Stack.Screen 
+                name="buyer/dashboard" 
+                options={{ 
+                  headerShown: false,
+                  presentation: 'card',
+                }} 
+              />
 
               {/* Modal Demo Screens */}
               <Stack.Screen

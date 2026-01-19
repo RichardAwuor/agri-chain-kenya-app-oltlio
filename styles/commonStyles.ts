@@ -18,6 +18,7 @@ export const colors = {
   success: '#006400',      // Dark green for success (using brand green)
   warning: '#FF8C00',      // Dark orange for warnings
   highlight: '#FFF9C4',    // Light yellow highlight
+  white: '#FFFFFF',        // White color
   
   // PLUS-Kenya specific brand colors
   kenyaGreen: '#006400',   // Kenya flag green

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { colors } from "@/styles/commonStyles";
@@ -131,7 +132,7 @@ export default function HomeScreen() {
         {/* Header with Logo and Slogan */}
         <View style={styles.header}>
           <Image 
-            source={require('@/assets/images/d1b8f8a7-f75f-4f17-9162-8eb3a77334c7.png')}
+            source={require('@/assets/images/62483af3-3f76-4837-b6d5-ddecbe2fa870.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -211,9 +212,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   logo: {
-    width: 270,
-    height: 270,
-    marginBottom: -1,
+    width: 180,
+    height: 180,
+    marginBottom: 8,
   },
   title: {
     fontSize: 32,
