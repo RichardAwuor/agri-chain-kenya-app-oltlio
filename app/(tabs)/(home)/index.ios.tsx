@@ -129,7 +129,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Logo and Slogan */}
+        {/* Header with Logo */}
         <View style={styles.header}>
           <Image 
             source={require('@/assets/images/62483af3-3f76-4837-b6d5-ddecbe2fa870.png')}
@@ -137,7 +137,6 @@ export default function HomeScreen() {
             resizeMode="contain"
           />
           <Text style={styles.title}>PLUS-Kenya</Text>
-          <Text style={styles.slogan}>{PLUS_KENYA_BRANDING.slogan}</Text>
           <View style={styles.flagColors}>
             <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.black }]} />
             <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.red }]} />
@@ -220,16 +219,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  slogan: {
-    fontSize: 16,
-    color: colors.kenyaGreen,
-    textAlign: 'center',
-    fontWeight: '600',
     marginBottom: 12,
-    fontStyle: 'italic',
+    letterSpacing: 1,
   },
   flagColors: {
     flexDirection: 'row',
