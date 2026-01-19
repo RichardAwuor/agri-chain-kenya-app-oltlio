@@ -18,6 +18,33 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface USState {
+  id: string;
+  stateName: string;
+  stateCode: string;
+}
+
+interface USCity {
+  id: string;
+  cityName: string;
+  stateCode: string;
+}
+
+interface USZipCode {
+  id: string;
+  zipCode: string;
+  cityName: string;
+  stateCode: string;
+}
+
+interface USAirport {
+  id: string;
+  airportName: string;
+  airportCode: string;
+  city: string;
+  stateCode: string;
+}
+
 export default function BuyerRegistration() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -31,36 +58,106 @@ export default function BuyerRegistration() {
   const [workIdFront, setWorkIdFront] = useState<string | null>(null);
   const [workIdBack, setWorkIdBack] = useState<string | null>(null);
   const [mainOfficeAddress, setMainOfficeAddress] = useState('');
-  const [officeState, setOfficeState] = useState('');
-  const [officeCity, setOfficeCity] = useState('');
-  const [officeZipCode, setOfficeZipCode] = useState('');
-  const [deliveryAirport, setDeliveryAirport] = useState('');
+  const [selectedState, setSelectedState] = useState<USState | null>(null);
+  const [selectedCity, setSelectedCity] = useState<USCity | null>(null);
+  const [selectedZipCode, setSelectedZipCode] = useState<USZipCode | null>(null);
+  const [selectedAirport, setSelectedAirport] = useState<USAirport | null>(null);
+
+  // Email validation states
+  const [emailValid, setEmailValid] = useState(false);
+  const [confirmEmailValid, setConfirmEmailValid] = useState(false);
 
   // Dropdown data
   const [organizations, setOrganizations] = useState<string[]>([]);
-  const [airports, setAirports] = useState<string[]>([]);
+  const [usStates, setUsStates] = useState<USState[]>([]);
+  const [usCities, setUsCities] = useState<USCity[]>([]);
+  const [usZipCodes, setUsZipCodes] = useState<USZipCode[]>([]);
+  const [usAirports, setUsAirports] = useState<USAirport[]>([]);
 
   // Dropdown visibility
   const [showOrganizationDropdown, setShowOrganizationDropdown] = useState(false);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showZipCodeDropdown, setShowZipCodeDropdown] = useState(false);
   const [showAirportDropdown, setShowAirportDropdown] = useState(false);
+
+  // Loading states for cascading dropdowns
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingZipCodes, setLoadingZipCodes] = useState(false);
 
   useEffect(() => {
     console.log('BuyerRegistration: Component mounted');
     loadDropdownData();
   }, []);
 
+  // Load cities when state is selected
+  useEffect(() => {
+    if (selectedState) {
+      console.log('BuyerRegistration: Loading cities for state', selectedState.stateCode);
+      loadCitiesForState(selectedState.stateCode);
+      // Reset city and zip code when state changes
+      setSelectedCity(null);
+      setSelectedZipCode(null);
+      setUsCities([]);
+      setUsZipCodes([]);
+    }
+  }, [selectedState]);
+
+  // Load zip codes when city is selected
+  useEffect(() => {
+    if (selectedCity && selectedState) {
+      console.log('BuyerRegistration: Loading zip codes for city', selectedCity.cityName);
+      loadZipCodesForCity(selectedCity.cityName, selectedState.stateCode);
+      // Reset zip code when city changes
+      setSelectedZipCode(null);
+      setUsZipCodes([]);
+    }
+  }, [selectedCity]);
+
+  // Validate email in real-time
+  useEffect(() => {
+    if (email.trim()) {
+      const isValid = validateEmail(email);
+      setEmailValid(isValid);
+      console.log('BuyerRegistration: Email validation', { email, isValid });
+    } else {
+      setEmailValid(false);
+    }
+  }, [email]);
+
+  // Validate confirm email in real-time
+  useEffect(() => {
+    if (confirmEmail.trim()) {
+      const isValid = email === confirmEmail && validateEmail(confirmEmail);
+      setConfirmEmailValid(isValid);
+      console.log('BuyerRegistration: Confirm email validation', { confirmEmail, isValid });
+    } else {
+      setConfirmEmailValid(false);
+    }
+  }, [confirmEmail, email]);
+
   const loadDropdownData = async () => {
     try {
       console.log('BuyerRegistration: Loading dropdown data');
       const { default: api } = await import('@/utils/api');
       
+      // Load organizations
       const orgsData = await api.getBuyerOrganizations();
       setOrganizations(orgsData);
 
-      const airportsData = await api.getMajorAirports();
-      setAirports(airportsData);
+      // Load US states
+      const statesData = await api.getUSStates();
+      setUsStates(statesData);
 
-      console.log('BuyerRegistration: Dropdown data loaded', { orgsData, airportsData });
+      // Load US airports
+      const airportsData = await api.getUSAirports();
+      setUsAirports(airportsData);
+
+      console.log('BuyerRegistration: Dropdown data loaded', { 
+        orgsCount: orgsData.length,
+        statesCount: statesData.length,
+        airportsCount: airportsData.length 
+      });
     } catch (error) {
       console.error('BuyerRegistration: Error loading dropdown data:', error);
       // Fallback data
@@ -76,19 +173,45 @@ export default function BuyerRegistration() {
         'Publix Super Markets',
         'ALDI',
       ]);
-      setAirports([
-        'Jomo Kenyatta International Airport (NBO)',
-        'Moi International Airport (MBA)',
-        'Kisumu International Airport (KIS)',
-        'Eldoret International Airport (EDL)',
-      ]);
+    }
+  };
+
+  const loadCitiesForState = async (stateCode: string) => {
+    setLoadingCities(true);
+    try {
+      console.log('BuyerRegistration: Fetching cities for state', stateCode);
+      const { default: api } = await import('@/utils/api');
+      const citiesData = await api.getUSCities(stateCode);
+      setUsCities(citiesData);
+      console.log('BuyerRegistration: Cities loaded', citiesData.length);
+    } catch (error) {
+      console.error('BuyerRegistration: Error loading cities:', error);
+      Alert.alert('Error', 'Failed to load cities. Please try again.');
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const loadZipCodesForCity = async (cityName: string, stateCode: string) => {
+    setLoadingZipCodes(true);
+    try {
+      console.log('BuyerRegistration: Fetching zip codes for city', cityName, stateCode);
+      const { default: api } = await import('@/utils/api');
+      const zipCodesData = await api.getUSZipCodes(cityName, stateCode);
+      setUsZipCodes(zipCodesData);
+      console.log('BuyerRegistration: Zip codes loaded', zipCodesData.length);
+    } catch (error) {
+      console.error('BuyerRegistration: Error loading zip codes:', error);
+      Alert.alert('Error', 'Failed to load zip codes. Please try again.');
+    } finally {
+      setLoadingZipCodes(false);
     }
   };
 
   const pickImage = async (type: 'front' | 'back') => {
     console.log('BuyerRegistration: Picking image for', type);
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -159,11 +282,23 @@ export default function BuyerRegistration() {
   };
 
   const validateStep3 = (): boolean => {
-    if (!mainOfficeAddress.trim() || !officeState.trim() || !officeCity.trim() || !officeZipCode.trim()) {
-      Alert.alert('Validation Error', 'Please fill in all office address fields');
+    if (!mainOfficeAddress.trim()) {
+      Alert.alert('Validation Error', 'Please enter the main office address');
       return false;
     }
-    if (!deliveryAirport) {
+    if (!selectedState) {
+      Alert.alert('Validation Error', 'Please select a state');
+      return false;
+    }
+    if (!selectedCity) {
+      Alert.alert('Validation Error', 'Please select a city');
+      return false;
+    }
+    if (!selectedZipCode) {
+      Alert.alert('Validation Error', 'Please select a zip code');
+      return false;
+    }
+    if (!selectedAirport) {
       Alert.alert('Validation Error', 'Please select a delivery airport');
       return false;
     }
@@ -240,17 +375,17 @@ export default function BuyerRegistration() {
       // Register buyer
       const registrationData = {
         email,
-        confirmEmail: email, // Same as email since we already validated
+        confirmEmail: email,
         firstName,
         lastName,
         organizationName,
         workIdFrontUrl,
         workIdBackUrl,
         mainOfficeAddress,
-        officeState,
-        officeCity,
-        officeZipCode,
-        deliveryAirport,
+        officeState: selectedState?.stateName || '',
+        officeCity: selectedCity?.cityName || '',
+        officeZipCode: selectedZipCode?.zipCode || '',
+        deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
       };
 
       console.log('BuyerRegistration: Registering buyer', registrationData);
@@ -279,10 +414,10 @@ export default function BuyerRegistration() {
         lastName: result.lastName,
         organizationName: result.organizationName,
         mainOfficeAddress,
-        officeState,
-        officeCity,
-        officeZipCode,
-        deliveryAirport,
+        officeState: selectedState?.stateName || '',
+        officeCity: selectedCity?.cityName || '',
+        officeZipCode: selectedZipCode?.zipCode || '',
+        deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
       }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
 
@@ -306,26 +441,68 @@ export default function BuyerRegistration() {
       <Text style={styles.stepTitle}>Personal Information</Text>
 
       <Text style={styles.label}>Work Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="your.name@company.com"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="your.name@company.com"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        {email.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {emailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>Re-enter Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={confirmEmail}
-        onChangeText={setConfirmEmail}
-        placeholder="Confirm your email"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={confirmEmail}
+          onChangeText={setConfirmEmail}
+          placeholder="Confirm your email"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        {confirmEmail.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {confirmEmailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>First Name *</Text>
       <TextInput
@@ -362,11 +539,12 @@ export default function BuyerRegistration() {
       </TouchableOpacity>
       {showOrganizationDropdown && (
         <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-          {organizations.map((org) => (
+          {organizations.map((org, index) => (
             <TouchableOpacity
-              key={org}
+              key={index}
               style={styles.dropdownItem}
               onPress={() => {
+                console.log('BuyerRegistration: Organization selected', org);
                 setOrganizationName(org);
                 setShowOrganizationDropdown(false);
               }}
@@ -440,40 +618,129 @@ export default function BuyerRegistration() {
       />
 
       <Text style={styles.label}>State *</Text>
-      <TextInput
-        style={styles.input}
-        value={officeState}
-        onChangeText={setOfficeState}
-        placeholder="Enter state"
-        placeholderTextColor={colors.textSecondary}
-      />
+      <TouchableOpacity
+        style={styles.dropdown}
+        onPress={() => setShowStateDropdown(!showStateDropdown)}
+      >
+        <Text style={selectedState ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {selectedState ? `${selectedState.stateName} (${selectedState.stateCode})` : 'Select state'}
+        </Text>
+        <IconSymbol
+          ios_icon_name="chevron.down"
+          android_material_icon_name="arrow-drop-down"
+          size={24}
+          color={colors.textSecondary}
+        />
+      </TouchableOpacity>
+      {showStateDropdown && (
+        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+          {usStates.map((state) => (
+            <TouchableOpacity
+              key={state.id}
+              style={styles.dropdownItem}
+              onPress={() => {
+                console.log('BuyerRegistration: State selected', state.stateName);
+                setSelectedState(state);
+                setShowStateDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>
+                {state.stateName} ({state.stateCode})
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <Text style={styles.label}>City *</Text>
-      <TextInput
-        style={styles.input}
-        value={officeCity}
-        onChangeText={setOfficeCity}
-        placeholder="Enter city"
-        placeholderTextColor={colors.textSecondary}
-      />
+      <TouchableOpacity
+        style={[styles.dropdown, !selectedState && styles.dropdownDisabled]}
+        onPress={() => {
+          if (selectedState) {
+            setShowCityDropdown(!showCityDropdown);
+          } else {
+            Alert.alert('Info', 'Please select a state first');
+          }
+        }}
+        disabled={!selectedState}
+      >
+        <Text style={selectedCity ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {loadingCities ? 'Loading cities...' : (selectedCity ? selectedCity.cityName : 'Select city')}
+        </Text>
+        <IconSymbol
+          ios_icon_name="chevron.down"
+          android_material_icon_name="arrow-drop-down"
+          size={24}
+          color={colors.textSecondary}
+        />
+      </TouchableOpacity>
+      {showCityDropdown && !loadingCities && (
+        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+          {usCities.map((city) => (
+            <TouchableOpacity
+              key={city.id}
+              style={styles.dropdownItem}
+              onPress={() => {
+                console.log('BuyerRegistration: City selected', city.cityName);
+                setSelectedCity(city);
+                setShowCityDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{city.cityName}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <Text style={styles.label}>Zip Code *</Text>
-      <TextInput
-        style={styles.input}
-        value={officeZipCode}
-        onChangeText={setOfficeZipCode}
-        placeholder="Enter zip code"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="number-pad"
-      />
+      <TouchableOpacity
+        style={[styles.dropdown, !selectedCity && styles.dropdownDisabled]}
+        onPress={() => {
+          if (selectedCity) {
+            setShowZipCodeDropdown(!showZipCodeDropdown);
+          } else {
+            Alert.alert('Info', 'Please select a city first');
+          }
+        }}
+        disabled={!selectedCity}
+      >
+        <Text style={selectedZipCode ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {loadingZipCodes ? 'Loading zip codes...' : (selectedZipCode ? selectedZipCode.zipCode : 'Select zip code')}
+        </Text>
+        <IconSymbol
+          ios_icon_name="chevron.down"
+          android_material_icon_name="arrow-drop-down"
+          size={24}
+          color={colors.textSecondary}
+        />
+      </TouchableOpacity>
+      {showZipCodeDropdown && !loadingZipCodes && (
+        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+          {usZipCodes.map((zipCode) => (
+            <TouchableOpacity
+              key={zipCode.id}
+              style={styles.dropdownItem}
+              onPress={() => {
+                console.log('BuyerRegistration: Zip code selected', zipCode.zipCode);
+                setSelectedZipCode(zipCode);
+                setShowZipCodeDropdown(false);
+              }}
+            >
+              <Text style={styles.dropdownItemText}>{zipCode.zipCode}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <Text style={styles.label}>Delivery Airport *</Text>
       <TouchableOpacity
         style={styles.dropdown}
         onPress={() => setShowAirportDropdown(!showAirportDropdown)}
       >
-        <Text style={deliveryAirport ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {deliveryAirport || 'Select delivery airport'}
+        <Text style={selectedAirport ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {selectedAirport 
+            ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` 
+            : 'Select delivery airport'}
         </Text>
         <IconSymbol
           ios_icon_name="chevron.down"
@@ -483,20 +750,24 @@ export default function BuyerRegistration() {
         />
       </TouchableOpacity>
       {showAirportDropdown && (
-        <View style={styles.dropdownList}>
-          {airports.map((airport) => (
+        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+          {usAirports.map((airport) => (
             <TouchableOpacity
-              key={airport}
+              key={airport.id}
               style={styles.dropdownItem}
               onPress={() => {
-                setDeliveryAirport(airport);
+                console.log('BuyerRegistration: Airport selected', airport.airportName);
+                setSelectedAirport(airport);
                 setShowAirportDropdown(false);
               }}
             >
-              <Text style={styles.dropdownItemText}>{airport}</Text>
+              <Text style={styles.dropdownItemText}>
+                {airport.airportName} ({airport.airportCode})
+                {airport.city && ` - ${airport.city}, ${airport.stateCode}`}
+              </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       )}
     </View>
   );
@@ -625,6 +896,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  inputWithIcon: {
+    position: 'relative',
+  },
+  inputWithCheckmark: {
+    paddingRight: 48,
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    bottom: 12,
+    justifyContent: 'center',
+  },
   dropdown: {
     backgroundColor: colors.card,
     borderRadius: 12,
@@ -635,13 +919,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  dropdownDisabled: {
+    opacity: 0.5,
+  },
   dropdownText: {
     fontSize: 16,
     color: colors.text,
+    flex: 1,
   },
   dropdownPlaceholder: {
     fontSize: 16,
     color: colors.textSecondary,
+    flex: 1,
   },
   dropdownList: {
     backgroundColor: colors.card,

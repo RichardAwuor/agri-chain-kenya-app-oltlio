@@ -42,6 +42,10 @@ export default function ServiceProviderRegistration() {
   const [ward, setWard] = useState('');
   const [coreMandates, setCoreMandates] = useState<string[]>([]);
 
+  // Email validation states
+  const [emailValid, setEmailValid] = useState(false);
+  const [confirmEmailValid, setConfirmEmailValid] = useState(false);
+
   // Dropdown data
   const [organizations, setOrganizations] = useState<string[]>([]);
   const [mandates, setMandates] = useState<string[]>([]);
@@ -63,6 +67,26 @@ export default function ServiceProviderRegistration() {
     loadDropdownData();
     loadCounties();
   }, []);
+
+  // Validate email in real-time
+  useEffect(() => {
+    if (email.trim()) {
+      const isValid = validateEmail(email);
+      setEmailValid(isValid);
+    } else {
+      setEmailValid(false);
+    }
+  }, [email]);
+
+  // Validate confirm email in real-time
+  useEffect(() => {
+    if (confirmEmail.trim()) {
+      const isValid = email === confirmEmail && validateEmail(confirmEmail);
+      setConfirmEmailValid(isValid);
+    } else {
+      setConfirmEmailValid(false);
+    }
+  }, [confirmEmail, email]);
 
   const loadDropdownData = async () => {
     try {
@@ -416,26 +440,68 @@ export default function ServiceProviderRegistration() {
       <Text style={styles.stepTitle}>Personal Information</Text>
 
       <Text style={styles.label}>Work Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="your.name@company.com"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="your.name@company.com"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        {email.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {emailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>Re-enter Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={confirmEmail}
-        onChangeText={setConfirmEmail}
-        placeholder="Confirm your email"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={confirmEmail}
+          onChangeText={setConfirmEmail}
+          placeholder="Confirm your email"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        {confirmEmail.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {confirmEmailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>First Name *</Text>
       <TextInput
@@ -810,6 +876,19 @@ const styles = StyleSheet.create({
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  inputWithIcon: {
+    position: 'relative',
+  },
+  inputWithCheckmark: {
+    paddingRight: 48,
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    bottom: 12,
+    justifyContent: 'center',
   },
   dropdown: {
     backgroundColor: colors.card,

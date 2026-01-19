@@ -93,7 +93,7 @@ export const api = {
     return data;
   },
 
-  // Location Data
+  // Location Data (Kenya)
   async getCounties() {
     console.log('API: Fetching counties');
     const response = await fetch(`${BACKEND_URL}/api/locations/counties`);
@@ -157,6 +157,67 @@ export const api = {
 
     const data = await response.json();
     console.log('API: Farmer ID generated successfully', data);
+    return data;
+  },
+
+  // US Location Data
+  async getUSStates() {
+    console.log('API: Fetching US states');
+    const response = await fetch(`${BACKEND_URL}/api/locations/us-states`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get US states failed', error);
+      throw new Error(`Failed to get US states: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: US states fetched successfully', data.length, 'states');
+    return data;
+  },
+
+  async getUSCities(stateCode: string) {
+    console.log('API: Fetching US cities for state', stateCode);
+    const response = await fetch(`${BACKEND_URL}/api/locations/us-cities?state=${encodeURIComponent(stateCode)}`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get US cities failed', error);
+      throw new Error(`Failed to get US cities: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: US cities fetched successfully', data.length, 'cities');
+    return data;
+  },
+
+  async getUSZipCodes(cityName: string, stateCode: string) {
+    console.log('API: Fetching US zip codes for', cityName, stateCode);
+    const response = await fetch(`${BACKEND_URL}/api/locations/us-zip-codes?city=${encodeURIComponent(cityName)}&state=${encodeURIComponent(stateCode)}`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get US zip codes failed', error);
+      throw new Error(`Failed to get US zip codes: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: US zip codes fetched successfully', data.length, 'zip codes');
+    return data;
+  },
+
+  async getUSAirports() {
+    console.log('API: Fetching US airports');
+    const response = await fetch(`${BACKEND_URL}/api/locations/us-airports`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get US airports failed', error);
+      throw new Error(`Failed to get US airports: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: US airports fetched successfully', data.length, 'airports');
     return data;
   },
 

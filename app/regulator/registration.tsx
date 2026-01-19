@@ -53,6 +53,10 @@ export default function RegulatorRegistration() {
   const [organizationName, setOrganizationName] = useState('');
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
+  // Email validation states
+  const [emailValid, setEmailValid] = useState(false);
+  const [confirmEmailValid, setConfirmEmailValid] = useState(false);
+
   // Step 2: Work ID Upload
   const [workIdFront, setWorkIdFront] = useState<string | null>(null);
   const [workIdBack, setWorkIdBack] = useState<string | null>(null);
@@ -84,6 +88,26 @@ export default function RegulatorRegistration() {
     console.log('RegulatorRegistration: Component mounted');
     loadDropdownData();
   }, []);
+
+  // Validate email in real-time
+  useEffect(() => {
+    if (email.trim()) {
+      const isValid = validateEmail(email);
+      setEmailValid(isValid);
+    } else {
+      setEmailValid(false);
+    }
+  }, [email]);
+
+  // Validate confirm email in real-time
+  useEffect(() => {
+    if (confirmEmail.trim()) {
+      const isValid = email === confirmEmail && validateEmail(confirmEmail);
+      setConfirmEmailValid(isValid);
+    } else {
+      setConfirmEmailValid(false);
+    }
+  }, [confirmEmail, email]);
 
   const loadDropdownData = async () => {
     console.log('RegulatorRegistration: Loading dropdown data');
@@ -416,28 +440,70 @@ export default function RegulatorRegistration() {
       <Text style={styles.stepTitle}>Personal Information</Text>
 
       <Text style={styles.label}>Work Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="your.name@organization.com"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="your.name@organization.com"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {email.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {emailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>Confirm Email *</Text>
-      <TextInput
-        style={styles.input}
-        value={confirmEmail}
-        onChangeText={setConfirmEmail}
-        placeholder="Re-enter your email"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
+      <View style={styles.inputWithIcon}>
+        <TextInput
+          style={[styles.input, styles.inputWithCheckmark]}
+          value={confirmEmail}
+          onChangeText={setConfirmEmail}
+          placeholder="Re-enter your email"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {confirmEmail.trim() !== '' && (
+          <View style={styles.checkmarkContainer}>
+            {confirmEmailValid ? (
+              <IconSymbol
+                ios_icon_name="checkmark.circle.fill"
+                android_material_icon_name="check-circle"
+                size={24}
+                color="#4CAF50"
+              />
+            ) : (
+              <IconSymbol
+                ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
+                size={24}
+                color="#F44336"
+              />
+            )}
+          </View>
+        )}
+      </View>
 
       <Text style={styles.label}>First Name *</Text>
       <TextInput
@@ -840,6 +906,19 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: colors.text,
+  },
+  inputWithIcon: {
+    position: 'relative',
+  },
+  inputWithCheckmark: {
+    paddingRight: 48,
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    bottom: 12,
+    justifyContent: 'center',
   },
   dropdown: {
     backgroundColor: colors.card,
