@@ -1,0 +1,3 @@
+-- This migration resolves the state where us_airports, us_cities, us_states, and us_zip_codes tables
+-- already exist in the database. No operations needed as tables are already created.
+-- This file marks the migration as complete without attempting to recreate existing tables.

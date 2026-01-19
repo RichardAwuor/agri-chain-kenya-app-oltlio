@@ -12,61 +12,97 @@ export function registerBuyerRoutes(app: App) {
     app.logger.info({}, 'Buyer registration initiated');
 
     try {
-      const data = await request.file();
-      if (!data) {
-        app.logger.warn({}, 'No files provided for buyer registration');
-        return reply.status(400).send({ error: 'Work ID files are required' });
+      // Parse multipart form data
+      const parts = request.parts();
+      const formFields: Record<string, string> = {};
+      let workIdFrontFile: any = null;
+      let workIdBackFile: any = null;
+
+      // Iterate through all parts (fields and files)
+      for await (const part of parts) {
+        if (part.type === 'field') {
+          // Handle form fields
+          formFields[part.fieldname] = String(part.value);
+        } else if (part.type === 'file') {
+          // Handle file uploads
+          if (part.fieldname === 'workIdFront') {
+            workIdFrontFile = part;
+          } else if (part.fieldname === 'workIdBack') {
+            workIdBackFile = part;
+          }
+        }
       }
 
-      const body = request.body as any;
+      // Validate required fields
+      if (!formFields.email || !formFields.firstName || !formFields.lastName) {
+        app.logger.warn({}, 'Missing required form fields for buyer registration');
+        return reply.status(400).send({ error: 'Missing required form fields' });
+      }
 
       // Validate email domain
-      if (!isValidPaidEmailDomain(body.email)) {
-        app.logger.warn({ email: body.email }, 'Invalid email domain');
+      if (!isValidPaidEmailDomain(formFields.email)) {
+        app.logger.warn({ email: formFields.email }, 'Invalid email domain');
         return reply.status(400).send({ error: 'Email domain must be paid (not free)' });
       }
 
       // Validate emails match
-      if (!emailsMatch(body.email, body.confirmEmail)) {
+      if (!emailsMatch(formFields.email, formFields.confirmEmail)) {
         app.logger.warn({}, 'Email confirmation mismatch');
         return reply.status(400).send({ error: 'Emails do not match' });
       }
 
-      // Upload work ID files
-      let workIdFrontUrl = '';
-      let workIdBackUrl = '';
+      // Validate files provided
+      if (!workIdFrontFile || !workIdBackFile) {
+        app.logger.warn({}, 'Both work ID front and back files are required');
+        return reply.status(400).send({ error: 'Both work ID front and back files are required' });
+      }
 
-      const buffer = await data.toBuffer();
-      const key = `work-ids/buyers/${Date.now()}-${data.filename}`;
-      const uploadedKey = await app.storage.upload(key, buffer);
-      const { url } = await app.storage.getSignedUrl(uploadedKey);
-      workIdFrontUrl = url;
-      workIdBackUrl = url;
+      // Upload work ID front file
+      const frontBuffer = await workIdFrontFile.toBuffer();
+      const frontKey = `work-ids/buyers/${Date.now()}-front-${workIdFrontFile.filename}`;
+      const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
+      const { url: workIdFrontUrl } = await app.storage.getSignedUrl(uploadedFrontKey);
+
+      app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded');
+
+      // Upload work ID back file
+      const backBuffer = await workIdBackFile.toBuffer();
+      const backKey = `work-ids/buyers/${Date.now()}-back-${workIdBackFile.filename}`;
+      const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
+      const { url: workIdBackUrl } = await app.storage.getSignedUrl(uploadedBackKey);
+
+      app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded');
 
       // Create buyer user
       const result = await app.db
         .insert(schema.users)
         .values({
           userType: 'buyer',
-          email: body.email,
-          firstName: body.firstName,
-          lastName: body.lastName,
-          organizationName: body.organizationName,
+          email: formFields.email,
+          firstName: formFields.firstName,
+          lastName: formFields.lastName,
+          organizationName: formFields.organizationName || null,
           county: 'N/A',
           subCounty: 'N/A',
           ward: 'N/A',
-          mainOfficeAddress: body.mainOfficeAddress,
-          officeState: body.officeState,
-          officeCity: body.officeCity,
-          officeZipCode: body.officeZipCode,
-          deliveryAirport: body.deliveryAirport,
+          mainOfficeAddress: formFields.mainOfficeAddress || null,
+          officeState: formFields.officeState || null,
+          officeCity: formFields.officeCity || null,
+          officeZipCode: formFields.officeZipCode || null,
+          deliveryAirport: formFields.deliveryAirport || null,
           workIdFrontUrl,
           workIdBackUrl,
           registrationCompleted: true,
         })
         .returning();
 
-      app.logger.info({ buyerId: result[0].id }, 'Buyer registered successfully');
+      app.logger.info(
+        {
+          buyerId: result[0].id,
+          email: formFields.email,
+        },
+        'Buyer registered successfully'
+      );
 
       return {
         id: result[0].id,
