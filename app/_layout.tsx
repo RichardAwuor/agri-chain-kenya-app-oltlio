@@ -8,6 +8,7 @@ import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColorScheme, Alert } from "react-native";
 import { useNetworkState } from "expo-network";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
@@ -16,6 +17,7 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { BACKEND_URL } from "@/utils/api";
 // Note: Error logging is auto-initialized via index.ts import
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -24,6 +26,38 @@ SplashScreen.preventAutoHideAsync();
 export const unstable_settings = {
   initialRouteName: "welcome", // Start with welcome screen
 };
+
+// Function to seed location data on app startup
+async function seedLocationData() {
+  try {
+    // Check if we've already seeded the data
+    const hasSeeded = await AsyncStorage.getItem('locationDataSeeded');
+    if (hasSeeded === 'true') {
+      console.log('RootLayout: Location data already seeded, skipping');
+      return;
+    }
+
+    console.log('RootLayout: Seeding location data...');
+    const response = await fetch(`${BACKEND_URL}/api/locations/seed-all`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('RootLayout: Location data seeded successfully', result);
+      await AsyncStorage.setItem('locationDataSeeded', 'true');
+    } else {
+      console.error('RootLayout: Failed to seed location data', response.status);
+    }
+  } catch (error) {
+    console.error('RootLayout: Error seeding location data:', error);
+    // Don't block app startup if seeding fails
+  }
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -35,6 +69,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      // Seed location data after splash screen is hidden
+      seedLocationData();
     }
   }, [loaded]);
 
