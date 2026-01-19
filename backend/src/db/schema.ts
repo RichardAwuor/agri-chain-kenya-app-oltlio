@@ -202,3 +202,62 @@ export const kenyaLocations = pgTable(
     countyNameIdx: index('idx_locations_county_name').on(table.countyName),
   })
 );
+
+// US states reference data
+export const usStates = pgTable(
+  'us_states',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stateName: text('state_name').notNull(),
+    stateCode: text('state_code').notNull(), // 2-letter abbreviation like 'CA', 'NY'
+  },
+  (table) => ({
+    stateCodeIdx: index('idx_us_states_code').on(table.stateCode),
+  })
+);
+
+// US cities reference data
+export const usCities = pgTable(
+  'us_cities',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    stateCode: text('state_code').notNull(),
+    cityName: text('city_name').notNull(),
+  },
+  (table) => ({
+    stateCodeIdx: index('idx_us_cities_state_code').on(table.stateCode),
+    cityNameIdx: index('idx_us_cities_city_name').on(table.cityName),
+  })
+);
+
+// US zip codes reference data
+export const usZipCodes = pgTable(
+  'us_zip_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cityName: text('city_name').notNull(),
+    stateCode: text('state_code').notNull(),
+    zipCode: text('zip_code').notNull(),
+  },
+  (table) => ({
+    cityNameIdx: index('idx_us_zip_codes_city_name').on(table.cityName),
+    stateCodeIdx: index('idx_us_zip_codes_state_code').on(table.stateCode),
+    zipCodeIdx: index('idx_us_zip_codes_zip_code').on(table.zipCode),
+  })
+);
+
+// US airports reference data
+export const usAirports = pgTable(
+  'us_airports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    airportName: text('airport_name').notNull(),
+    airportCode: text('airport_code').notNull(), // 3-letter IATA code
+    city: text('city'),
+    stateCode: text('state_code'),
+  },
+  (table) => ({
+    airportCodeIdx: index('idx_us_airports_code').on(table.airportCode),
+    stateCodeIdx: index('idx_us_airports_state_code').on(table.stateCode),
+  })
+);
