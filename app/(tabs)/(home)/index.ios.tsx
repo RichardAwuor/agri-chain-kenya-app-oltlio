@@ -97,28 +97,28 @@ export default function HomeScreen() {
       type: 'producer' as UserType,
       title: 'Producer',
       description: 'Register your farm and report agricultural activities',
-      icon: 'agriculture',
+      image: require('@/assets/images/6ced810c-a456-4826-bf14-0fb03c758e53.png'),
       color: colors.kenyaGreen,
     },
     {
       type: 'regulator' as UserType,
       title: 'Regulator',
       description: 'Monitor farms and ensure compliance',
-      icon: 'verified',
+      image: require('@/assets/images/e775604c-2817-4bfb-bbb1-78666e36034f.png'),
       color: colors.kenyaRed,
     },
     {
       type: 'service_provider' as UserType,
       title: 'Service Provider',
       description: 'Provide agricultural services to farmers',
-      icon: 'build',
+      image: require('@/assets/images/446ea42f-586c-4567-8671-1f5945df609e.png'),
       color: colors.kenyaGreen,
     },
     {
       type: 'buyer' as UserType,
       title: 'Buyer',
       description: 'Create orders and purchase agricultural products',
-      icon: 'shopping-cart',
+      image: require('@/assets/images/4b223baf-fa5d-43e7-b0a8-19fc10baaca5.png'),
       color: colors.kenyaRed,
     },
   ];
@@ -158,12 +158,11 @@ export default function HomeScreen() {
               onPress={() => handleUserTypeSelect(userType.type)}
               activeOpacity={0.7}
             >
-              <View style={[styles.iconContainer, { backgroundColor: userType.color + '20' }]}>
-                <IconSymbol
-                  ios_icon_name={userType.icon}
-                  android_material_icon_name={userType.icon}
-                  size={32}
-                  color={userType.color}
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={userType.image}
+                  style={styles.roleImage}
+                  resizeMode="cover"
                 />
               </View>
               <View style={styles.userTypeContent}>
@@ -257,13 +256,17 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.primary + '08',
   },
-  iconContainer: {
+  imageContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
     marginRight: 16,
+    backgroundColor: colors.border,
+  },
+  roleImage: {
+    width: '100%',
+    height: '100%',
   },
   userTypeContent: {
     flex: 1,
