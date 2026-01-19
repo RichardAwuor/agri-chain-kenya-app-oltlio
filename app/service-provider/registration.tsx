@@ -333,73 +333,48 @@ export default function ServiceProviderRegistration() {
     try {
       const { BACKEND_URL } = await import('@/utils/api');
       
-      // First, upload work ID images if they exist
-      let workIdFrontUrl = workIdFront;
-      let workIdBackUrl = workIdBack;
+      // Create FormData for multipart/form-data submission
+      const formData = new FormData();
+      
+      // Add text fields
+      formData.append('email', email);
+      formData.append('confirmEmail', email);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('organizationName', organizationName);
+      formData.append('county', county);
+      formData.append('subCounty', subCounty);
+      formData.append('ward', ward);
+      formData.append('coreMandates', JSON.stringify(coreMandates));
 
-      if (workIdFront && workIdFront.startsWith('file://')) {
-        console.log('ServiceProviderRegistration: Uploading front work ID');
-        const formData = new FormData();
-        formData.append('image', {
+      // Add work ID images
+      if (workIdFront) {
+        formData.append('workIdFront', {
           uri: workIdFront,
           type: 'image/jpeg',
           name: 'work-id-front.jpg',
         } as any);
-
-        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadResponse.json();
-        workIdFrontUrl = uploadData.url;
-        console.log('ServiceProviderRegistration: Front work ID uploaded', workIdFrontUrl);
       }
 
-      if (workIdBack && workIdBack.startsWith('file://')) {
-        console.log('ServiceProviderRegistration: Uploading back work ID');
-        const formData = new FormData();
-        formData.append('image', {
+      if (workIdBack) {
+        formData.append('workIdBack', {
           uri: workIdBack,
           type: 'image/jpeg',
           name: 'work-id-back.jpg',
         } as any);
-
-        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadResponse.json();
-        workIdBackUrl = uploadData.url;
-        console.log('ServiceProviderRegistration: Back work ID uploaded', workIdBackUrl);
       }
 
-      // Register service provider
-      const registrationData = {
-        email,
-        confirmEmail: email, // Same as email since we already validated
-        firstName,
-        lastName,
-        organizationName,
-        workIdFrontUrl,
-        workIdBackUrl,
-        county,
-        subCounty,
-        ward,
-        coreMandates,
-      };
-
-      console.log('ServiceProviderRegistration: Registering service provider', registrationData);
+      console.log('ServiceProviderRegistration: Submitting form data with multipart/form-data');
       const response = await fetch(`${BACKEND_URL}/api/service-providers/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
+        body: formData,
+        // Don't set Content-Type header - let the browser set it with the boundary
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+        const errorText = await response.text();
+        console.error('ServiceProviderRegistration: Registration failed with status', response.status, errorText);
+        throw new Error(errorText || 'Registration failed');
       }
 
       const result = await response.json();
