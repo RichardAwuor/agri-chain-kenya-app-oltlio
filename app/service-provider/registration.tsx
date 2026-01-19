@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LocationData {
   counties: Array<{ countyName: string; countyCode: string; countyNumber: string }>;
-  subCounties: string[];
+  subCounties: Array<{ subCounty: string; subCountyNumber: string }>;
   wards: Array<{ wardName: string; wardNumber: string }>;
 }
 
@@ -138,7 +138,7 @@ export default function ServiceProviderRegistration() {
 
   const loadSubCounties = async (selectedCounty: string) => {
     if (selectedCounty === 'Various') {
-      setLocationData((prev) => ({ ...prev, subCounties: ['Various'] }));
+      setLocationData((prev) => ({ ...prev, subCounties: [{ subCounty: 'Various', subCountyNumber: '00' }] }));
       return;
     }
 
@@ -149,10 +149,10 @@ export default function ServiceProviderRegistration() {
       const subCounties = await api.getSubCounties(selectedCounty);
       
       // Add "Various" option
-      const subCountiesWithVarious = ['Various', ...subCounties];
+      const subCountiesWithVarious = [{ subCounty: 'Various', subCountyNumber: '00' }, ...subCounties];
       
       setLocationData((prev) => ({ ...prev, subCounties: subCountiesWithVarious }));
-      console.log('ServiceProviderRegistration: Sub-counties loaded', subCountiesWithVarious.length);
+      console.log('ServiceProviderRegistration: Sub-counties loaded (alphabetically ordered with numbers)', subCountiesWithVarious.length);
     } catch (error) {
       console.error('ServiceProviderRegistration: Error loading sub-counties:', error);
       Alert.alert('Error', 'Failed to load sub-counties. Please try again.');
@@ -198,12 +198,12 @@ export default function ServiceProviderRegistration() {
     loadSubCounties(selectedCounty.countyName);
   };
 
-  const handleSubCountySelect = (selectedSubCounty: string) => {
-    console.log('ServiceProviderRegistration: Sub-county selected', selectedSubCounty);
-    setSubCounty(selectedSubCounty);
+  const handleSubCountySelect = (selectedSubCountyItem: { subCounty: string; subCountyNumber: string }) => {
+    console.log('ServiceProviderRegistration: Sub-county selected', selectedSubCountyItem.subCounty, 'Number:', selectedSubCountyItem.subCountyNumber);
+    setSubCounty(selectedSubCountyItem.subCounty);
     setWard('');
     setShowSubCountyDropdown(false);
-    loadWards(county, selectedSubCounty);
+    loadWards(county, selectedSubCountyItem.subCounty);
   };
 
   const handleWardSelect = (selectedWard: { wardName: string; wardNumber: string }) => {
@@ -654,13 +654,15 @@ export default function ServiceProviderRegistration() {
           </TouchableOpacity>
           {showSubCountyDropdown && (
             <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {locationData.subCounties.map((sc) => (
+              {locationData.subCounties.map((sc, index) => (
                 <TouchableOpacity
-                  key={sc}
+                  key={index}
                   style={styles.dropdownItem}
                   onPress={() => handleSubCountySelect(sc)}
                 >
-                  <Text style={styles.dropdownItemText}>{sc}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {sc.subCountyNumber}. {sc.subCounty}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -687,13 +689,15 @@ export default function ServiceProviderRegistration() {
           </TouchableOpacity>
           {showWardDropdown && (
             <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {locationData.wards.map((w) => (
+              {locationData.wards.map((w, index) => (
                 <TouchableOpacity
-                  key={w.wardNumber}
+                  key={index}
                   style={styles.dropdownItem}
                   onPress={() => handleWardSelect(w)}
                 >
-                  <Text style={styles.dropdownItemText}>{w.wardName}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {w.wardNumber}. {w.wardName}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

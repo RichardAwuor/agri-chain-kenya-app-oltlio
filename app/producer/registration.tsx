@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LocationData {
   counties: Array<{ countyName: string; countyCode: string; countyNumber: string }>;
-  subCounties: string[];
+  subCounties: Array<{ subCounty: string; subCountyNumber: string }>;
   wards: Array<{ wardName: string; wardNumber: string }>;
 }
 
@@ -452,13 +452,15 @@ export default function ProducerRegistration() {
         </TouchableOpacity>
         {showSubCountyPicker && (
           <View style={styles.pickerContainer}>
-            {locationData.subCounties.map((subCounty) => (
+            {locationData.subCounties.map((subCountyItem, index) => (
               <TouchableOpacity
-                key={subCounty}
+                key={index}
                 style={styles.pickerItem}
-                onPress={() => handleSubCountySelect(subCounty)}
+                onPress={() => handleSubCountySelect(subCountyItem.subCounty)}
               >
-                <Text style={styles.pickerItemText}>{subCounty}</Text>
+                <Text style={styles.pickerItemText}>
+                  {subCountyItem.subCountyNumber}. {subCountyItem.subCounty}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -484,13 +486,15 @@ export default function ProducerRegistration() {
         </TouchableOpacity>
         {showWardPicker && (
           <View style={styles.pickerContainer}>
-            {locationData.wards.map((ward) => (
+            {locationData.wards.map((ward, index) => (
               <TouchableOpacity
-                key={ward.wardNumber}
+                key={index}
                 style={styles.pickerItem}
                 onPress={() => handleWardSelect(ward)}
               >
-                <Text style={styles.pickerItemText}>{ward.wardName}</Text>
+                <Text style={styles.pickerItemText}>
+                  {ward.wardNumber}. {ward.wardName}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>

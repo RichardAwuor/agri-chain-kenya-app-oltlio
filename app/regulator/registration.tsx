@@ -22,7 +22,7 @@ import api from '@/utils/api';
 
 interface LocationData {
   counties: Array<{ countyName: string; countyCode: string; countyNumber: string }>;
-  subCounties: string[];
+  subCounties: Array<{ subCounty: string; subCountyNumber: string }>;
   wards: Array<{ wardName: string; wardNumber: string }>;
 }
 
@@ -141,7 +141,7 @@ export default function RegulatorRegistration() {
 
   const loadSubCounties = async (county: string) => {
     if (county === 'Various') {
-      setLocationData((prev) => ({ ...prev, subCounties: ['Various'] }));
+      setLocationData((prev) => ({ ...prev, subCounties: [{ subCounty: 'Various', subCountyNumber: '00' }] }));
       return;
     }
     
@@ -149,13 +149,13 @@ export default function RegulatorRegistration() {
       const subCounties = await api.getSubCounties(county);
       
       // Add "Various" option
-      const subCountiesWithVarious = [...subCounties, 'Various'];
+      const subCountiesWithVarious = [...subCounties, { subCounty: 'Various', subCountyNumber: '00' }];
       
       setLocationData((prev) => ({ ...prev, subCounties: subCountiesWithVarious }));
-      console.log('RegulatorRegistration: Loaded sub-counties for', county, ':', subCountiesWithVarious.length);
+      console.log('RegulatorRegistration: Loaded sub-counties for', county, '(alphabetically ordered with numbers):', subCountiesWithVarious.length);
     } catch (error) {
       console.error('RegulatorRegistration: Error loading sub-counties:', error);
-      setLocationData((prev) => ({ ...prev, subCounties: ['Various'] }));
+      setLocationData((prev) => ({ ...prev, subCounties: [{ subCounty: 'Various', subCountyNumber: '00' }] }));
     }
   };
 
@@ -197,13 +197,13 @@ export default function RegulatorRegistration() {
     loadSubCounties(county.countyName);
   };
 
-  const handleSubCountySelect = (subCounty: string) => {
-    console.log('RegulatorRegistration: Sub-county selected:', subCounty);
-    setSelectedSubCounty(subCounty);
+  const handleSubCountySelect = (subCountyItem: { subCounty: string; subCountyNumber: string }) => {
+    console.log('RegulatorRegistration: Sub-county selected:', subCountyItem.subCounty, 'Number:', subCountyItem.subCountyNumber);
+    setSelectedSubCounty(subCountyItem.subCounty);
     setSelectedWard(null);
     setShowSubCountyDropdown(false);
     if (selectedCounty) {
-      loadWards(selectedCounty.countyName, subCounty);
+      loadWards(selectedCounty.countyName, subCountyItem.subCounty);
     }
   };
 
@@ -686,13 +686,15 @@ export default function RegulatorRegistration() {
           </TouchableOpacity>
           {showSubCountyDropdown && (
             <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {locationData.subCounties.map((subCounty) => (
+              {locationData.subCounties.map((subCountyItem, index) => (
                 <TouchableOpacity
-                  key={subCounty}
+                  key={index}
                   style={styles.dropdownItem}
-                  onPress={() => handleSubCountySelect(subCounty)}
+                  onPress={() => handleSubCountySelect(subCountyItem)}
                 >
-                  <Text style={styles.dropdownItemText}>{subCounty}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {subCountyItem.subCountyNumber}. {subCountyItem.subCounty}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -719,13 +721,15 @@ export default function RegulatorRegistration() {
           </TouchableOpacity>
           {showWardDropdown && (
             <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {locationData.wards.map((ward) => (
+              {locationData.wards.map((ward, index) => (
                 <TouchableOpacity
-                  key={ward.wardNumber}
+                  key={index}
                   style={styles.dropdownItem}
                   onPress={() => handleWardSelect(ward)}
                 >
-                  <Text style={styles.dropdownItemText}>{ward.wardName}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {ward.wardNumber}. {ward.wardName}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
