@@ -63,6 +63,10 @@ export default function BuyerRegistration() {
   const [selectedZipCode, setSelectedZipCode] = useState<USZipCode | null>(null);
   const [selectedAirport, setSelectedAirport] = useState<USAirport | null>(null);
 
+  // Manual input fields for city and zip code (placeholders)
+  const [manualCity, setManualCity] = useState('');
+  const [manualZipCode, setManualZipCode] = useState('');
+
   // Email validation states
   const [emailValid, setEmailValid] = useState(false);
   const [confirmEmailValid, setConfirmEmailValid] = useState(false);
@@ -98,6 +102,8 @@ export default function BuyerRegistration() {
       // Reset city and zip code when state changes
       setSelectedCity(null);
       setSelectedZipCode(null);
+      setManualCity('');
+      setManualZipCode('');
       setUsCities([]);
       setUsZipCodes([]);
     }
@@ -110,6 +116,7 @@ export default function BuyerRegistration() {
       loadZipCodesForCity(selectedCity.cityName, selectedState.stateCode);
       // Reset zip code when city changes
       setSelectedZipCode(null);
+      setManualZipCode('');
       setUsZipCodes([]);
     }
   }, [selectedCity]);
@@ -186,7 +193,7 @@ export default function BuyerRegistration() {
       console.log('BuyerRegistration: Cities loaded', citiesData.length);
     } catch (error) {
       console.error('BuyerRegistration: Error loading cities:', error);
-      Alert.alert('Error', 'Failed to load cities. Please try again.');
+      Alert.alert('Info', 'Cities data not available. You can enter the city name manually.');
     } finally {
       setLoadingCities(false);
     }
@@ -202,7 +209,7 @@ export default function BuyerRegistration() {
       console.log('BuyerRegistration: Zip codes loaded', zipCodesData.length);
     } catch (error) {
       console.error('BuyerRegistration: Error loading zip codes:', error);
-      Alert.alert('Error', 'Failed to load zip codes. Please try again.');
+      Alert.alert('Info', 'Zip codes data not available. You can enter the zip code manually.');
     } finally {
       setLoadingZipCodes(false);
     }
@@ -290,12 +297,14 @@ export default function BuyerRegistration() {
       Alert.alert('Validation Error', 'Please select a state');
       return false;
     }
-    if (!selectedCity) {
-      Alert.alert('Validation Error', 'Please select a city');
+    // Check if city is provided (either from dropdown or manual input)
+    if (!selectedCity && !manualCity.trim()) {
+      Alert.alert('Validation Error', 'Please select or enter a city');
       return false;
     }
-    if (!selectedZipCode) {
-      Alert.alert('Validation Error', 'Please select a zip code');
+    // Check if zip code is provided (either from dropdown or manual input)
+    if (!selectedZipCode && !manualZipCode.trim()) {
+      Alert.alert('Validation Error', 'Please select or enter a zip code');
       return false;
     }
     if (!selectedAirport) {
@@ -372,6 +381,10 @@ export default function BuyerRegistration() {
         console.log('BuyerRegistration: Back work ID uploaded', workIdBackUrl);
       }
 
+      // Use manual input if dropdown selection is not available
+      const finalCity = selectedCity?.cityName || manualCity;
+      const finalZipCode = selectedZipCode?.zipCode || manualZipCode;
+
       // Register buyer
       const registrationData = {
         email,
@@ -383,8 +396,8 @@ export default function BuyerRegistration() {
         workIdBackUrl,
         mainOfficeAddress,
         officeState: selectedState?.stateName || '',
-        officeCity: selectedCity?.cityName || '',
-        officeZipCode: selectedZipCode?.zipCode || '',
+        officeCity: finalCity,
+        officeZipCode: finalZipCode,
         deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
       };
 
@@ -415,8 +428,8 @@ export default function BuyerRegistration() {
         organizationName: result.organizationName,
         mainOfficeAddress,
         officeState: selectedState?.stateName || '',
-        officeCity: selectedCity?.cityName || '',
-        officeZipCode: selectedZipCode?.zipCode || '',
+        officeCity: finalCity,
+        officeZipCode: finalZipCode,
         deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
       }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
@@ -653,83 +666,112 @@ export default function BuyerRegistration() {
       )}
 
       <Text style={styles.label}>City *</Text>
-      <TouchableOpacity
-        style={[styles.dropdown, !selectedState && styles.dropdownDisabled]}
-        onPress={() => {
-          if (selectedState) {
-            setShowCityDropdown(!showCityDropdown);
-          } else {
-            Alert.alert('Info', 'Please select a state first');
-          }
-        }}
-        disabled={!selectedState}
-      >
-        <Text style={selectedCity ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {loadingCities ? 'Loading cities...' : (selectedCity ? selectedCity.cityName : 'Select city')}
-        </Text>
-        <IconSymbol
-          ios_icon_name="chevron.down"
-          android_material_icon_name="arrow-drop-down"
-          size={24}
-          color={colors.textSecondary}
+      {usCities.length > 0 ? (
+        <React.Fragment>
+          <TouchableOpacity
+            style={[styles.dropdown, !selectedState && styles.dropdownDisabled]}
+            onPress={() => {
+              if (selectedState) {
+                setShowCityDropdown(!showCityDropdown);
+              } else {
+                Alert.alert('Info', 'Please select a state first');
+              }
+            }}
+            disabled={!selectedState}
+          >
+            <Text style={selectedCity ? styles.dropdownText : styles.dropdownPlaceholder}>
+              {loadingCities ? 'Loading cities...' : (selectedCity ? selectedCity.cityName : 'Select city')}
+            </Text>
+            <IconSymbol
+              ios_icon_name="chevron.down"
+              android_material_icon_name="arrow-drop-down"
+              size={24}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+          {showCityDropdown && !loadingCities && (
+            <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+              {usCities.map((city) => (
+                <TouchableOpacity
+                  key={city.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    console.log('BuyerRegistration: City selected', city.cityName);
+                    setSelectedCity(city);
+                    setManualCity('');
+                    setShowCityDropdown(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>{city.cityName}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </React.Fragment>
+      ) : (
+        <TextInput
+          style={styles.input}
+          value={manualCity}
+          onChangeText={setManualCity}
+          placeholder="Enter city name (e.g., Los Angeles, New York)"
+          placeholderTextColor={colors.textSecondary}
+          editable={!!selectedState}
         />
-      </TouchableOpacity>
-      {showCityDropdown && !loadingCities && (
-        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-          {usCities.map((city) => (
-            <TouchableOpacity
-              key={city.id}
-              style={styles.dropdownItem}
-              onPress={() => {
-                console.log('BuyerRegistration: City selected', city.cityName);
-                setSelectedCity(city);
-                setShowCityDropdown(false);
-              }}
-            >
-              <Text style={styles.dropdownItemText}>{city.cityName}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       )}
 
       <Text style={styles.label}>Zip Code *</Text>
-      <TouchableOpacity
-        style={[styles.dropdown, !selectedCity && styles.dropdownDisabled]}
-        onPress={() => {
-          if (selectedCity) {
-            setShowZipCodeDropdown(!showZipCodeDropdown);
-          } else {
-            Alert.alert('Info', 'Please select a city first');
-          }
-        }}
-        disabled={!selectedCity}
-      >
-        <Text style={selectedZipCode ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {loadingZipCodes ? 'Loading zip codes...' : (selectedZipCode ? selectedZipCode.zipCode : 'Select zip code')}
-        </Text>
-        <IconSymbol
-          ios_icon_name="chevron.down"
-          android_material_icon_name="arrow-drop-down"
-          size={24}
-          color={colors.textSecondary}
+      {usZipCodes.length > 0 ? (
+        <React.Fragment>
+          <TouchableOpacity
+            style={[styles.dropdown, !selectedCity && !manualCity && styles.dropdownDisabled]}
+            onPress={() => {
+              if (selectedCity || manualCity) {
+                setShowZipCodeDropdown(!showZipCodeDropdown);
+              } else {
+                Alert.alert('Info', 'Please select or enter a city first');
+              }
+            }}
+            disabled={!selectedCity && !manualCity}
+          >
+            <Text style={selectedZipCode ? styles.dropdownText : styles.dropdownPlaceholder}>
+              {loadingZipCodes ? 'Loading zip codes...' : (selectedZipCode ? selectedZipCode.zipCode : 'Select zip code')}
+            </Text>
+            <IconSymbol
+              ios_icon_name="chevron.down"
+              android_material_icon_name="arrow-drop-down"
+              size={24}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+          {showZipCodeDropdown && !loadingZipCodes && (
+            <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+              {usZipCodes.map((zipCode) => (
+                <TouchableOpacity
+                  key={zipCode.id}
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    console.log('BuyerRegistration: Zip code selected', zipCode.zipCode);
+                    setSelectedZipCode(zipCode);
+                    setManualZipCode('');
+                    setShowZipCodeDropdown(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>{zipCode.zipCode}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </React.Fragment>
+      ) : (
+        <TextInput
+          style={styles.input}
+          value={manualZipCode}
+          onChangeText={setManualZipCode}
+          placeholder="Enter zip code (e.g., 90001, 10001)"
+          placeholderTextColor={colors.textSecondary}
+          keyboardType="number-pad"
+          editable={!!selectedState}
         />
-      </TouchableOpacity>
-      {showZipCodeDropdown && !loadingZipCodes && (
-        <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-          {usZipCodes.map((zipCode) => (
-            <TouchableOpacity
-              key={zipCode.id}
-              style={styles.dropdownItem}
-              onPress={() => {
-                console.log('BuyerRegistration: Zip code selected', zipCode.zipCode);
-                setSelectedZipCode(zipCode);
-                setShowZipCodeDropdown(false);
-              }}
-            >
-              <Text style={styles.dropdownItemText}>{zipCode.zipCode}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       )}
 
       <Text style={styles.label}>Delivery Airport *</Text>

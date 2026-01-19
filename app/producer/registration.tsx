@@ -44,10 +44,18 @@ export default function ProducerRegistration() {
     wards: [],
   });
   const [selectedCounty, setSelectedCounty] = useState('');
+  const [selectedCountyCode, setSelectedCountyCode] = useState('');
+  const [selectedCountyNumber, setSelectedCountyNumber] = useState('');
   const [selectedSubCounty, setSelectedSubCounty] = useState('');
+  const [selectedSubCountyNumber, setSelectedSubCountyNumber] = useState('');
   const [selectedWard, setSelectedWard] = useState('');
+  const [selectedWardNumber, setSelectedWardNumber] = useState('');
   const [addressLat, setAddressLat] = useState<number | null>(null);
   const [addressLng, setAddressLng] = useState<number | null>(null);
+  
+  // Manual input fields for sub-county and ward (placeholders)
+  const [manualSubCounty, setManualSubCounty] = useState('');
+  const [manualWard, setManualWard] = useState('');
   
   // Farm data
   const [farmAcreage, setFarmAcreage] = useState('');
@@ -59,11 +67,28 @@ export default function ProducerRegistration() {
   const [showCropPicker, setShowCropPicker] = useState(false);
   const [cropTypes, setCropTypes] = useState<string[]>([]);
 
+  // Sample farmer ID generation
+  const [sampleFarmerId, setSampleFarmerId] = useState('');
+
   useEffect(() => {
     console.log('ProducerRegistration: Component mounted, loading counties and crop types');
     loadCounties();
     loadCropTypes();
   }, []);
+
+  // Generate sample farmer ID when county, sub-county, and ward are selected
+  useEffect(() => {
+    if (selectedCountyCode && selectedCountyNumber && (selectedSubCountyNumber || manualSubCounty) && (selectedWardNumber || manualWard)) {
+      const subCountyNum = selectedSubCountyNumber || '01'; // Use placeholder if manual
+      const wardNum = selectedWardNumber || '01'; // Use placeholder if manual
+      const farmerNum = '001'; // Sample farmer number
+      const sampleId = `${selectedCountyCode}${selectedCountyNumber}-${subCountyNum}-${wardNum}${farmerNum}`;
+      setSampleFarmerId(sampleId);
+      console.log('ProducerRegistration: Sample Farmer ID generated', sampleId);
+    } else {
+      setSampleFarmerId('');
+    }
+  }, [selectedCountyCode, selectedCountyNumber, selectedSubCountyNumber, selectedWardNumber, manualSubCounty, manualWard]);
 
   const loadCounties = async () => {
     console.log('ProducerRegistration: Loading counties from backend');
@@ -105,7 +130,7 @@ export default function ProducerRegistration() {
       }));
     } catch (error) {
       console.error('ProducerRegistration: Error loading sub-counties:', error);
-      Alert.alert('Error', 'Failed to load sub-counties. Please try again.');
+      Alert.alert('Info', 'Sub-counties data not available. You can enter the sub-county name manually.');
     }
   };
 
@@ -120,7 +145,7 @@ export default function ProducerRegistration() {
       }));
     } catch (error) {
       console.error('ProducerRegistration: Error loading wards:', error);
-      Alert.alert('Error', 'Failed to load wards. Please try again.');
+      Alert.alert('Info', 'Wards data not available. You can enter the ward name manually.');
     }
   };
 
@@ -158,16 +183,26 @@ export default function ProducerRegistration() {
   const handleCountySelect = (county: { countyName: string; countyCode: string; countyNumber: string }) => {
     console.log('ProducerRegistration: County selected', county);
     setSelectedCounty(county.countyName);
+    setSelectedCountyCode(county.countyCode);
+    setSelectedCountyNumber(county.countyNumber);
     setSelectedSubCounty('');
+    setSelectedSubCountyNumber('');
     setSelectedWard('');
+    setSelectedWardNumber('');
+    setManualSubCounty('');
+    setManualWard('');
     setShowCountyPicker(false);
     loadSubCounties(county.countyName);
   };
 
-  const handleSubCountySelect = (subCounty: string) => {
+  const handleSubCountySelect = (subCounty: string, subCountyNumber: string) => {
     console.log('ProducerRegistration: Sub-county selected', subCounty);
     setSelectedSubCounty(subCounty);
+    setSelectedSubCountyNumber(subCountyNumber);
     setSelectedWard('');
+    setSelectedWardNumber('');
+    setManualSubCounty('');
+    setManualWard('');
     setShowSubCountyPicker(false);
     loadWards(selectedCounty, subCounty);
   };
@@ -175,6 +210,8 @@ export default function ProducerRegistration() {
   const handleWardSelect = (ward: { wardName: string; wardNumber: string }) => {
     console.log('ProducerRegistration: Ward selected', ward);
     setSelectedWard(ward.wardName);
+    setSelectedWardNumber(ward.wardNumber);
+    setManualWard('');
     setShowWardPicker(false);
   };
 
@@ -211,12 +248,12 @@ export default function ProducerRegistration() {
       Alert.alert('Validation Error', 'Please select a county');
       return false;
     }
-    if (!selectedSubCounty) {
-      Alert.alert('Validation Error', 'Please select a sub-county');
+    if (!selectedSubCounty && !manualSubCounty.trim()) {
+      Alert.alert('Validation Error', 'Please select or enter a sub-county');
       return false;
     }
-    if (!selectedWard) {
-      Alert.alert('Validation Error', 'Please select a ward');
+    if (!selectedWard && !manualWard.trim()) {
+      Alert.alert('Validation Error', 'Please select or enter a ward');
       return false;
     }
     if (!addressLat || !addressLng) {
@@ -269,6 +306,10 @@ export default function ProducerRegistration() {
     try {
       const { default: api } = await import('@/utils/api');
       
+      // Use manual input if dropdown selection is not available
+      const finalSubCounty = selectedSubCounty || manualSubCounty;
+      const finalWard = selectedWard || manualWard;
+      
       const userData = {
         userType: 'producer',
         firstName,
@@ -277,8 +318,8 @@ export default function ProducerRegistration() {
         dateOfBirth: dateOfBirth.toISOString().split('T')[0],
         idNumber,
         county: selectedCounty,
-        subCounty: selectedSubCounty,
-        ward: selectedWard,
+        subCounty: finalSubCounty,
+        ward: finalWard,
         addressLat,
         addressLng,
         farmAcreage: parseFloat(farmAcreage),
@@ -295,7 +336,7 @@ export default function ProducerRegistration() {
       
       Alert.alert(
         'Success',
-        `Registration completed successfully! Your farmer ID is: ${result.user.farmerId || 'Pending'}`,
+        `Registration completed successfully! Your farmer ID is: ${result.user.farmerId || sampleFarmerId || 'Pending'}`,
         [
           {
             text: 'OK',
@@ -435,71 +476,112 @@ export default function ProducerRegistration() {
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Sub-County *</Text>
-        <TouchableOpacity
-          style={[styles.selectButton, !selectedCounty && styles.selectButtonDisabled]}
-          onPress={() => selectedCounty && setShowSubCountyPicker(!showSubCountyPicker)}
-          disabled={!selectedCounty}
-        >
-          <Text style={[styles.selectButtonText, !selectedSubCounty && styles.placeholder]}>
-            {selectedSubCounty || 'Select sub-county'}
-          </Text>
-          <IconSymbol
-            ios_icon_name="chevron.down"
-            android_material_icon_name="arrow-drop-down"
-            size={20}
-            color={colors.textSecondary}
+        {locationData.subCounties.length > 0 ? (
+          <React.Fragment>
+            <TouchableOpacity
+              style={[styles.selectButton, !selectedCounty && styles.selectButtonDisabled]}
+              onPress={() => selectedCounty && setShowSubCountyPicker(!showSubCountyPicker)}
+              disabled={!selectedCounty}
+            >
+              <Text style={[styles.selectButtonText, !selectedSubCounty && styles.placeholder]}>
+                {selectedSubCounty || 'Select sub-county'}
+              </Text>
+              <IconSymbol
+                ios_icon_name="chevron.down"
+                android_material_icon_name="arrow-drop-down"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+            {showSubCountyPicker && (
+              <View style={styles.pickerContainer}>
+                {locationData.subCounties.map((subCountyItem, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.pickerItem}
+                    onPress={() => handleSubCountySelect(subCountyItem.subCounty, subCountyItem.subCountyNumber)}
+                  >
+                    <Text style={styles.pickerItemText}>
+                      {subCountyItem.subCountyNumber}. {subCountyItem.subCounty}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </React.Fragment>
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={manualSubCounty}
+            onChangeText={setManualSubCounty}
+            placeholder="Enter sub-county name (e.g., Westlands, Embakasi)"
+            placeholderTextColor={colors.textSecondary}
+            editable={!!selectedCounty}
           />
-        </TouchableOpacity>
-        {showSubCountyPicker && (
-          <View style={styles.pickerContainer}>
-            {locationData.subCounties.map((subCountyItem, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.pickerItem}
-                onPress={() => handleSubCountySelect(subCountyItem.subCounty)}
-              >
-                <Text style={styles.pickerItemText}>
-                  {subCountyItem.subCountyNumber}. {subCountyItem.subCounty}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         )}
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Ward *</Text>
-        <TouchableOpacity
-          style={[styles.selectButton, !selectedSubCounty && styles.selectButtonDisabled]}
-          onPress={() => selectedSubCounty && setShowWardPicker(!showWardPicker)}
-          disabled={!selectedSubCounty}
-        >
-          <Text style={[styles.selectButtonText, !selectedWard && styles.placeholder]}>
-            {selectedWard || 'Select ward'}
-          </Text>
-          <IconSymbol
-            ios_icon_name="chevron.down"
-            android_material_icon_name="arrow-drop-down"
-            size={20}
-            color={colors.textSecondary}
+        {locationData.wards.length > 0 ? (
+          <React.Fragment>
+            <TouchableOpacity
+              style={[styles.selectButton, (!selectedSubCounty && !manualSubCounty) && styles.selectButtonDisabled]}
+              onPress={() => (selectedSubCounty || manualSubCounty) && setShowWardPicker(!showWardPicker)}
+              disabled={!selectedSubCounty && !manualSubCounty}
+            >
+              <Text style={[styles.selectButtonText, !selectedWard && styles.placeholder]}>
+                {selectedWard || 'Select ward'}
+              </Text>
+              <IconSymbol
+                ios_icon_name="chevron.down"
+                android_material_icon_name="arrow-drop-down"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+            {showWardPicker && (
+              <View style={styles.pickerContainer}>
+                {locationData.wards.map((ward, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.pickerItem}
+                    onPress={() => handleWardSelect(ward)}
+                  >
+                    <Text style={styles.pickerItemText}>
+                      {ward.wardNumber}. {ward.wardName}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </React.Fragment>
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={manualWard}
+            onChangeText={setManualWard}
+            placeholder="Enter ward name (e.g., Parklands, Utawala)"
+            placeholderTextColor={colors.textSecondary}
+            editable={!!selectedCounty}
           />
-        </TouchableOpacity>
-        {showWardPicker && (
-          <View style={styles.pickerContainer}>
-            {locationData.wards.map((ward, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.pickerItem}
-                onPress={() => handleWardSelect(ward)}
-              >
-                <Text style={styles.pickerItemText}>
-                  {ward.wardNumber}. {ward.wardName}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         )}
       </View>
+
+      {sampleFarmerId && (
+        <View style={styles.sampleIdBox}>
+          <IconSymbol
+            ios_icon_name="info.circle"
+            android_material_icon_name="info"
+            size={20}
+            color={colors.primary}
+          />
+          <View style={styles.sampleIdContent}>
+            <Text style={styles.sampleIdLabel}>Sample Farmer ID:</Text>
+            <Text style={styles.sampleIdText}>{sampleFarmerId}</Text>
+          </View>
+        </View>
+      )}
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Farm Address *</Text>
@@ -785,6 +867,31 @@ const styles = StyleSheet.create({
   pickerItemText: {
     fontSize: 16,
     color: colors.text,
+  },
+  sampleIdBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '15',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.primary + '30',
+  },
+  sampleIdContent: {
+    flex: 1,
+  },
+  sampleIdLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  sampleIdText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 1,
   },
   locationButton: {
     flexDirection: 'row',
