@@ -37,8 +37,10 @@ async function seedLocationData() {
       return;
     }
 
-    console.log('RootLayout: Seeding location data...');
-    const response = await fetch(`${BACKEND_URL}/api/locations/seed-all`, {
+    console.log('RootLayout: Seeding Kenya location data...');
+    
+    // Seed Kenya locations
+    const kenyaResponse = await fetch(`${BACKEND_URL}/api/seed/locations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,12 +48,35 @@ async function seedLocationData() {
       body: JSON.stringify({}),
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log('RootLayout: Location data seeded successfully', result);
-      await AsyncStorage.setItem('locationDataSeeded', 'true');
+    if (kenyaResponse.ok) {
+      const kenyaResult = await kenyaResponse.json();
+      console.log('RootLayout: Kenya location data seeded successfully', kenyaResult);
     } else {
-      console.error('RootLayout: Failed to seed location data', response.status);
+      console.error('RootLayout: Failed to seed Kenya location data', kenyaResponse.status);
+    }
+
+    console.log('RootLayout: Seeding US location data...');
+    
+    // Seed US locations
+    const usResponse = await fetch(`${BACKEND_URL}/api/locations/seed-us`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    if (usResponse.ok) {
+      const usResult = await usResponse.json();
+      console.log('RootLayout: US location data seeded successfully', usResult);
+    } else {
+      console.error('RootLayout: Failed to seed US location data', usResponse.status);
+    }
+
+    // Mark as seeded only if both succeeded
+    if (kenyaResponse.ok && usResponse.ok) {
+      await AsyncStorage.setItem('locationDataSeeded', 'true');
+      console.log('RootLayout: All location data seeded successfully');
     }
   } catch (error) {
     console.error('RootLayout: Error seeding location data:', error);
