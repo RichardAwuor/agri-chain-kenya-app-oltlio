@@ -43,6 +43,12 @@ export default function HomeScreen() {
             // User has completed registration, navigate to main app
             if (userType === 'producer') {
               router.push('/producer/reporting');
+            } else if (userType === 'buyer') {
+              router.push('/buyer/dashboard');
+            } else if (userType === 'regulator') {
+              router.push('/regulator/dashboard');
+            } else if (userType === 'service_provider') {
+              router.push('/service-provider/dashboard');
             } else {
               navigateToUserScreen(userType as UserType, userId);
             }
