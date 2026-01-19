@@ -341,78 +341,53 @@ export default function BuyerRegistration() {
     try {
       const { BACKEND_URL } = await import('@/utils/api');
       
-      // First, upload work ID images if they exist
-      let workIdFrontUrl = workIdFront;
-      let workIdBackUrl = workIdBack;
-
-      if (workIdFront && workIdFront.startsWith('file://')) {
-        console.log('BuyerRegistration: Uploading front work ID');
-        const formData = new FormData();
-        formData.append('image', {
-          uri: workIdFront,
-          type: 'image/jpeg',
-          name: 'work-id-front.jpg',
-        } as any);
-
-        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadResponse.json();
-        workIdFrontUrl = uploadData.url;
-        console.log('BuyerRegistration: Front work ID uploaded', workIdFrontUrl);
-      }
-
-      if (workIdBack && workIdBack.startsWith('file://')) {
-        console.log('BuyerRegistration: Uploading back work ID');
-        const formData = new FormData();
-        formData.append('image', {
-          uri: workIdBack,
-          type: 'image/jpeg',
-          name: 'work-id-back.jpg',
-        } as any);
-
-        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/work-id`, {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadResponse.json();
-        workIdBackUrl = uploadData.url;
-        console.log('BuyerRegistration: Back work ID uploaded', workIdBackUrl);
-      }
-
       // Use manual input if dropdown selection is not available
       const finalCity = selectedCity?.cityName || manualCity;
       const finalZipCode = selectedZipCode?.zipCode || manualZipCode;
 
-      // Register buyer
-      const registrationData = {
-        email,
-        confirmEmail: email,
-        firstName,
-        lastName,
-        organizationName,
-        workIdFrontUrl,
-        workIdBackUrl,
-        mainOfficeAddress,
-        officeState: selectedState?.stateName || '',
-        officeCity: finalCity,
-        officeZipCode: finalZipCode,
-        deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
-      };
+      // Create FormData for multipart/form-data submission
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('confirmEmail', email);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('organizationName', organizationName);
+      formData.append('mainOfficeAddress', mainOfficeAddress);
+      formData.append('officeState', selectedState?.stateName || '');
+      formData.append('officeCity', finalCity);
+      formData.append('officeZipCode', finalZipCode);
+      formData.append('deliveryAirport', selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '');
 
-      console.log('BuyerRegistration: Registering buyer', registrationData);
+      // Add work ID images
+      if (workIdFront) {
+        console.log('BuyerRegistration: Adding front work ID to form data');
+        formData.append('workIdFront', {
+          uri: workIdFront,
+          type: 'image/jpeg',
+          name: 'work-id-front.jpg',
+        } as any);
+      }
+
+      if (workIdBack) {
+        console.log('BuyerRegistration: Adding back work ID to form data');
+        formData.append('workIdBack', {
+          uri: workIdBack,
+          type: 'image/jpeg',
+          name: 'work-id-back.jpg',
+        } as any);
+      }
+
+      console.log('BuyerRegistration: Submitting buyer registration as multipart/form-data');
       const response = await fetch(`${BACKEND_URL}/api/buyers/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
+        body: formData,
+        // Don't set Content-Type header - let the browser/fetch set it with the boundary
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+        const errorText = await response.text();
+        console.error('BuyerRegistration: Registration failed with status', response.status, errorText);
+        throw new Error(errorText || 'Registration failed');
       }
 
       const result = await response.json();
@@ -434,7 +409,7 @@ export default function BuyerRegistration() {
       }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
 
-      console.log('BuyerRegistration: Registration successful', result.id);
+      console.log('BuyerRegistration: Registration successful, navigating to dashboard', result.id);
       Alert.alert('Success', 'Registration completed successfully!', [
         {
           text: 'OK',
