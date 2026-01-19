@@ -82,7 +82,11 @@ export default function ProducerRegistration() {
       const subCountyNum = selectedSubCountyNumber || '01'; // Use placeholder if manual
       const wardNum = selectedWardNumber || '01'; // Use placeholder if manual
       const farmerNum = '001'; // Sample farmer number
-      const sampleId = `${selectedCountyCode}${selectedCountyNumber}-${subCountyNum}-${wardNum}${farmerNum}`;
+      
+      // Format: CountyCode + CountyNumber + "-" + WardNumber + "-" + FarmerNumber
+      // Example: NRU32-13-743 where NRU=county code, 32=county number, 13=ward number, 743=farmer number
+      // Fixed: Changed from wardNum+farmerNum to wardNum-farmerNum to prevent duplication
+      const sampleId = `${selectedCountyCode}${selectedCountyNumber}-${wardNum}-${farmerNum}`;
       setSampleFarmerId(sampleId);
       console.log('ProducerRegistration: Sample Farmer ID generated', sampleId);
     } else {
