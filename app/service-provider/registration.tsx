@@ -94,12 +94,12 @@ export default function ServiceProviderRegistration() {
       setLoadingLocations(true);
       console.log('ServiceProviderRegistration: Loading counties');
       const { default: api } = await import('@/utils/api');
-      const result = await api.getCounties();
+      const counties = await api.getCounties();
       
       // Add "Various" option
       const countiesWithVarious = [
         { countyName: 'Various', countyCode: 'VAR', countyNumber: '00' },
-        ...result.counties,
+        ...counties,
       ];
       
       setLocationData((prev) => ({ ...prev, counties: countiesWithVarious }));
@@ -122,10 +122,10 @@ export default function ServiceProviderRegistration() {
       setLoadingLocations(true);
       console.log('ServiceProviderRegistration: Loading sub-counties for', selectedCounty);
       const { default: api } = await import('@/utils/api');
-      const result = await api.getSubCounties(selectedCounty);
+      const subCounties = await api.getSubCounties(selectedCounty);
       
       // Add "Various" option
-      const subCountiesWithVarious = ['Various', ...result.subCounties];
+      const subCountiesWithVarious = ['Various', ...subCounties];
       
       setLocationData((prev) => ({ ...prev, subCounties: subCountiesWithVarious }));
       console.log('ServiceProviderRegistration: Sub-counties loaded', subCountiesWithVarious.length);
@@ -147,12 +147,12 @@ export default function ServiceProviderRegistration() {
       setLoadingLocations(true);
       console.log('ServiceProviderRegistration: Loading wards for', { selectedCounty, selectedSubCounty });
       const { default: api } = await import('@/utils/api');
-      const result = await api.getWards(selectedCounty, selectedSubCounty);
+      const wards = await api.getWards(selectedCounty, selectedSubCounty);
       
       // Add "Various" option
       const wardsWithVarious = [
         { wardName: 'Various', wardNumber: '00' },
-        ...result.wards,
+        ...wards,
       ];
       
       setLocationData((prev) => ({ ...prev, wards: wardsWithVarious }));

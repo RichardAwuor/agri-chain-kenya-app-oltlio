@@ -99,12 +99,11 @@ export default function RegulatorRegistration() {
 
   const loadCounties = async () => {
     try {
-      const response = await fetch(api.getDropdownData('counties'));
-      const data = await response.json();
+      const counties = await api.getCounties();
       
       // Add "Various" option
       const countiesWithVarious = [
-        ...data,
+        ...counties,
         { countyName: 'Various', countyCode: 'VAR', countyNumber: '00' }
       ];
       
@@ -123,11 +122,10 @@ export default function RegulatorRegistration() {
     }
     
     try {
-      const response = await fetch(api.getDropdownData(`sub-counties?county=${encodeURIComponent(county)}`));
-      const data = await response.json();
+      const subCounties = await api.getSubCounties(county);
       
       // Add "Various" option
-      const subCountiesWithVarious = [...data, 'Various'];
+      const subCountiesWithVarious = [...subCounties, 'Various'];
       
       setLocationData((prev) => ({ ...prev, subCounties: subCountiesWithVarious }));
       console.log('RegulatorRegistration: Loaded sub-counties for', county, ':', subCountiesWithVarious.length);
@@ -147,14 +145,11 @@ export default function RegulatorRegistration() {
     }
     
     try {
-      const response = await fetch(
-        api.getDropdownData(`wards?county=${encodeURIComponent(county)}&subCounty=${encodeURIComponent(subCounty)}`)
-      );
-      const data = await response.json();
+      const wards = await api.getWards(county, subCounty);
       
       // Add "Various" option
       const wardsWithVarious = [
-        ...data,
+        ...wards,
         { wardName: 'Various', wardNumber: '00' }
       ];
       
