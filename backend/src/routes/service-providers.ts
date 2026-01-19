@@ -19,72 +19,121 @@ export function registerServiceProviderRoutes(app: App) {
     app.logger.info({}, 'Service provider registration initiated');
 
     try {
-      const data = await request.file();
-      if (!data) {
-        app.logger.warn({}, 'No files provided for service provider registration');
-        return reply.status(400).send({ error: 'Work ID files are required' });
+      // Parse multipart form data
+      const parts = request.parts();
+      const formFields: Record<string, string> = {};
+      let workIdFrontFile: any = null;
+      let workIdBackFile: any = null;
+
+      // Iterate through all parts (fields and files)
+      for await (const part of parts) {
+        if (part.type === 'field') {
+          // Handle form fields
+          formFields[part.fieldname] = String(part.value);
+        } else if (part.type === 'file') {
+          // Handle file uploads
+          if (part.fieldname === 'workIdFront') {
+            workIdFrontFile = part;
+            app.logger.debug({ filename: part.filename }, 'workIdFront file received');
+          } else if (part.fieldname === 'workIdBack') {
+            workIdBackFile = part;
+            app.logger.debug({ filename: part.filename }, 'workIdBack file received');
+          }
+        }
       }
 
-      const body = request.body as any;
+      // Validate required fields
+      if (!formFields.email || !formFields.firstName || !formFields.lastName) {
+        app.logger.warn({}, 'Missing required form fields for service provider registration');
+        return reply.status(400).send({ error: 'Missing required form fields (email, firstName, lastName)' });
+      }
 
       // Validate email domain
-      if (!isValidPaidEmailDomain(body.email)) {
-        app.logger.warn({ email: body.email }, 'Invalid email domain');
+      if (!isValidPaidEmailDomain(formFields.email)) {
+        app.logger.warn({ email: formFields.email }, 'Invalid email domain');
         return reply.status(400).send({ error: 'Email domain must be paid (not free)' });
       }
 
       // Validate emails match
-      if (!emailsMatch(body.email, body.confirmEmail)) {
+      if (!emailsMatch(formFields.email, formFields.confirmEmail)) {
         app.logger.warn({}, 'Email confirmation mismatch');
         return reply.status(400).send({ error: 'Emails do not match' });
       }
 
+      // Validate files provided
+      if (!workIdFrontFile || !workIdBackFile) {
+        app.logger.warn(
+          { hasFront: !!workIdFrontFile, hasBack: !!workIdBackFile },
+          'Both work ID front and back files are required'
+        );
+        return reply.status(400).send({ error: 'Both work ID front and back files are required' });
+      }
+
       // Parse core mandates array
-      let coreMandates = body.coreMandates;
-      if (typeof coreMandates === 'string') {
+      let coreMandates: string[] = [];
+      if (formFields.coreMandates) {
         try {
-          coreMandates = JSON.parse(coreMandates);
+          const parsed = JSON.parse(formFields.coreMandates);
+          coreMandates = Array.isArray(parsed) ? parsed : [parsed];
         } catch {
-          coreMandates = [coreMandates];
+          coreMandates = [formFields.coreMandates];
         }
       }
-      if (!Array.isArray(coreMandates)) {
-        coreMandates = [];
-      }
 
-      // Upload work ID files
-      let workIdFrontUrl = '';
-      let workIdBackUrl = '';
+      app.logger.info({ email: formFields.email }, 'Starting file uploads');
 
-      // Note: In a real implementation, we would handle multiple file uploads
-      // For now, we'll use placeholder logic
-      const buffer = await data.toBuffer();
-      const key = `work-ids/sp/${Date.now()}-${data.filename}`;
-      const uploadedKey = await app.storage.upload(key, buffer);
-      const { url } = await app.storage.getSignedUrl(uploadedKey);
-      workIdFrontUrl = url;
-      workIdBackUrl = url; // In real scenario, handle separate front/back files
+      // Upload work ID front file
+      app.logger.debug({ filename: workIdFrontFile.filename }, 'Converting front file to buffer');
+      const frontBuffer = await workIdFrontFile.toBuffer();
+      app.logger.debug({ size: frontBuffer.length }, 'Front file buffer created');
+
+      const frontKey = `work-ids/sp/${Date.now()}-front-${workIdFrontFile.filename}`;
+      app.logger.debug({ key: frontKey }, 'Uploading front file to storage');
+      const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
+      app.logger.debug({ uploadedKey: uploadedFrontKey }, 'Front file uploaded, getting signed URL');
+
+      const { url: workIdFrontUrl } = await app.storage.getSignedUrl(uploadedFrontKey);
+      app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded successfully');
+
+      // Upload work ID back file
+      app.logger.debug({ filename: workIdBackFile.filename }, 'Converting back file to buffer');
+      const backBuffer = await workIdBackFile.toBuffer();
+      app.logger.debug({ size: backBuffer.length }, 'Back file buffer created');
+
+      const backKey = `work-ids/sp/${Date.now()}-back-${workIdBackFile.filename}`;
+      app.logger.debug({ key: backKey }, 'Uploading back file to storage');
+      const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
+      app.logger.debug({ uploadedKey: uploadedBackKey }, 'Back file uploaded, getting signed URL');
+
+      const { url: workIdBackUrl } = await app.storage.getSignedUrl(uploadedBackKey);
+      app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded successfully');
 
       // Create service provider user
       const result = await app.db
         .insert(schema.users)
         .values({
           userType: 'service_provider',
-          email: body.email,
-          firstName: body.firstName,
-          lastName: body.lastName,
-          county: body.county,
-          subCounty: body.subCounty,
-          ward: body.ward,
-          organizationName: body.organizationName,
-          coreMandates: coreMandates,
+          email: formFields.email,
+          firstName: formFields.firstName,
+          lastName: formFields.lastName,
+          county: formFields.county || null,
+          subCounty: formFields.subCounty || null,
+          ward: formFields.ward || null,
+          organizationName: formFields.organizationName || null,
+          coreMandates: coreMandates.length > 0 ? coreMandates : null,
           workIdFrontUrl,
           workIdBackUrl,
           registrationCompleted: true,
         })
         .returning();
 
-      app.logger.info({ serviceProviderId: result[0].id }, 'Service provider registered successfully');
+      app.logger.info(
+        {
+          serviceProviderId: result[0].id,
+          email: formFields.email,
+        },
+        'Service provider registered successfully'
+      );
 
       return {
         id: result[0].id,

@@ -53,25 +53,40 @@ export function registerBuyerRoutes(app: App) {
 
       // Validate files provided
       if (!workIdFrontFile || !workIdBackFile) {
-        app.logger.warn({}, 'Both work ID front and back files are required');
+        app.logger.warn(
+          { hasFront: !!workIdFrontFile, hasBack: !!workIdBackFile },
+          'Both work ID front and back files are required'
+        );
         return reply.status(400).send({ error: 'Both work ID front and back files are required' });
       }
 
-      // Upload work ID front file
-      const frontBuffer = await workIdFrontFile.toBuffer();
-      const frontKey = `work-ids/buyers/${Date.now()}-front-${workIdFrontFile.filename}`;
-      const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
-      const { url: workIdFrontUrl } = await app.storage.getSignedUrl(uploadedFrontKey);
+      app.logger.info({ email: formFields.email }, 'Starting file uploads');
 
-      app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded');
+      // Upload work ID front file
+      app.logger.debug({ filename: workIdFrontFile.filename }, 'Converting front file to buffer');
+      const frontBuffer = await workIdFrontFile.toBuffer();
+      app.logger.debug({ size: frontBuffer.length }, 'Front file buffer created');
+
+      const frontKey = `work-ids/buyers/${Date.now()}-front-${workIdFrontFile.filename}`;
+      app.logger.debug({ key: frontKey }, 'Uploading front file to storage');
+      const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
+      app.logger.debug({ uploadedKey: uploadedFrontKey }, 'Front file uploaded, getting signed URL');
+
+      const { url: workIdFrontUrl } = await app.storage.getSignedUrl(uploadedFrontKey);
+      app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded successfully');
 
       // Upload work ID back file
+      app.logger.debug({ filename: workIdBackFile.filename }, 'Converting back file to buffer');
       const backBuffer = await workIdBackFile.toBuffer();
-      const backKey = `work-ids/buyers/${Date.now()}-back-${workIdBackFile.filename}`;
-      const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
-      const { url: workIdBackUrl } = await app.storage.getSignedUrl(uploadedBackKey);
+      app.logger.debug({ size: backBuffer.length }, 'Back file buffer created');
 
-      app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded');
+      const backKey = `work-ids/buyers/${Date.now()}-back-${workIdBackFile.filename}`;
+      app.logger.debug({ key: backKey }, 'Uploading back file to storage');
+      const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
+      app.logger.debug({ uploadedKey: uploadedBackKey }, 'Back file uploaded, getting signed URL');
+
+      const { url: workIdBackUrl } = await app.storage.getSignedUrl(uploadedBackKey);
+      app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded successfully');
 
       // Create buyer user
       const result = await app.db
