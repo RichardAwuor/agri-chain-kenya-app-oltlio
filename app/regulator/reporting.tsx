@@ -50,6 +50,10 @@ export default function RegulatorReporting() {
   const [selectedFarmer, setSelectedFarmer] = useState<NearbyFarmer | null>(null);
   const [showFarmerDropdown, setShowFarmerDropdown] = useState(false);
 
+  // NEW: Spacing and Standards Adherence
+  const [spacingCompliant, setSpacingCompliant] = useState<boolean | null>(null);
+  const [standardsAdherenceNotes, setStandardsAdherenceNotes] = useState('');
+
   // Photos and comments
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -69,9 +73,10 @@ export default function RegulatorReporting() {
       if (userId && userDataStr) {
         const userData = JSON.parse(userDataStr);
         setRegulatorId(userId);
-        setRegulatorName(`${userData.firstName} ${userData.lastName}`);
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+        setRegulatorName(fullName);
         setOrganizationName(userData.organizationName || '');
-        console.log('RegulatorReporting: Loaded user data for', regulatorName);
+        console.log('RegulatorReporting: Loaded user data for', fullName);
       } else {
         Alert.alert('Error', 'User data not found. Please register first.');
         router.back();
@@ -192,16 +197,20 @@ export default function RegulatorReporting() {
       Alert.alert('Validation Error', 'Please select a farmer to visit');
       return false;
     }
+    if (spacingCompliant === null) {
+      Alert.alert('Validation Error', 'Please indicate if spacing is compliant');
+      return false;
+    }
     if (photos.length === 0) {
-      Alert.alert('Validation Error', 'Please upload at least one farm photo');
+      Alert.alert('Validation Error', 'Please upload at least one farm photo for standards adherence');
       return false;
     }
-    if (!comments.trim()) {
-      Alert.alert('Validation Error', 'Please add comments about the visit');
+    if (!standardsAdherenceNotes.trim()) {
+      Alert.alert('Validation Error', 'Please add standards adherence notes');
       return false;
     }
-    if (comments.length > 160) {
-      Alert.alert('Validation Error', 'Comments must be 160 characters or less');
+    if (standardsAdherenceNotes.length > 160) {
+      Alert.alert('Validation Error', 'Standards adherence notes must be 160 characters or less');
       return false;
     }
     return true;
@@ -231,6 +240,8 @@ export default function RegulatorReporting() {
           visitDate: visitDateTime.toISOString(),
           visitLat: currentLocation.lat,
           visitLng: currentLocation.lng,
+          spacingCompliant,
+          standardsAdherenceNotes: standardsAdherenceNotes.substring(0, 160),
           comments: comments.substring(0, 160),
           photoUrls: photos,
         }),
@@ -250,6 +261,8 @@ export default function RegulatorReporting() {
           onPress: () => {
             // Reset form
             setSelectedFarmer(null);
+            setSpacingCompliant(null);
+            setStandardsAdherenceNotes('');
             setPhotos([]);
             setComments('');
             setVisitDate(new Date());
@@ -264,6 +277,11 @@ export default function RegulatorReporting() {
       setLoading(false);
     }
   };
+
+  const yesButtonStyle = spacingCompliant === true ? styles.checkboxButtonSelected : styles.checkboxButton;
+  const noButtonStyle = spacingCompliant === false ? styles.checkboxButtonSelected : styles.checkboxButton;
+  const yesTextStyle = spacingCompliant === true ? styles.checkboxButtonTextSelected : styles.checkboxButtonText;
+  const noTextStyle = spacingCompliant === false ? styles.checkboxButtonTextSelected : styles.checkboxButtonText;
 
   return (
     <View style={styles.container}>
@@ -428,7 +446,26 @@ export default function RegulatorReporting() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Farm Photos</Text>
+          <Text style={styles.sectionTitle}>Spacing Compliance</Text>
+          <Text style={styles.label}>Is spacing compliant? *</Text>
+          <View style={styles.checkboxContainer}>
+            <TouchableOpacity
+              style={yesButtonStyle}
+              onPress={() => setSpacingCompliant(true)}
+            >
+              <Text style={yesTextStyle}>YES</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={noButtonStyle}
+              onPress={() => setSpacingCompliant(false)}
+            >
+              <Text style={noTextStyle}>NO</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Standards Adherence: Crop and Soil Scans</Text>
           <Text style={styles.subtitle}>Upload up to 5 photos</Text>
 
           <View style={styles.photosContainer}>
@@ -470,16 +507,31 @@ export default function RegulatorReporting() {
               </TouchableOpacity>
             )}
           </View>
+
+          <Text style={styles.label}>Standards Adherence Notes *</Text>
+          <Text style={styles.subtitle}>Max 160 characters</Text>
+          <TextInput
+            style={styles.commentsInput}
+            value={standardsAdherenceNotes}
+            onChangeText={setStandardsAdherenceNotes}
+            placeholder="Enter observations about crop and soil standards..."
+            placeholderTextColor={colors.textSecondary}
+            multiline
+            maxLength={160}
+          />
+          <Text style={styles.characterCount}>
+            {standardsAdherenceNotes.length}/160 characters
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Comments</Text>
+          <Text style={styles.sectionTitle}>Additional Comments (Optional)</Text>
           <Text style={styles.subtitle}>Max 160 characters</Text>
           <TextInput
             style={styles.commentsInput}
             value={comments}
             onChangeText={setComments}
-            placeholder="Enter your observations and comments..."
+            placeholder="Enter any additional observations..."
             placeholderTextColor={colors.textSecondary}
             multiline
             maxLength={160}
@@ -653,6 +705,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.card,
     fontWeight: '600',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  checkboxButton: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  checkboxButtonSelected: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  checkboxButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  checkboxButtonTextSelected: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
   },
   photosContainer: {
     flexDirection: 'row',

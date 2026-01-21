@@ -33,6 +33,10 @@ export default function BuyerCreateOrder() {
   // Dropdown data
   const [cropTypes, setCropTypes] = useState<string[]>([]);
   const [showCropDropdown, setShowCropDropdown] = useState(false);
+  
+  // Available volumes from service provider reports
+  const [availableVolumes, setAvailableVolumes] = useState<Array<{ cropType: string; volumeLbs: number; collectionWeek: number }>>([]);
+  const [loadingVolumes, setLoadingVolumes] = useState(false);
 
   // Calculated values
   const [estimatedInvoice, setEstimatedInvoice] = useState(0);
@@ -44,6 +48,7 @@ export default function BuyerCreateOrder() {
     console.log('BuyerCreateOrder: Component mounted');
     loadUserData();
     loadCropTypes();
+    loadAvailableVolumes();
   }, []);
 
   useEffect(() => {
@@ -78,6 +83,25 @@ export default function BuyerCreateOrder() {
     } catch (error) {
       console.error('BuyerCreateOrder: Error loading crop types:', error);
       setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato']);
+    }
+  };
+
+  const loadAvailableVolumes = async () => {
+    setLoadingVolumes(true);
+    try {
+      console.log('BuyerCreateOrder: Loading available volumes from service provider reports');
+      const { BACKEND_URL } = await import('@/utils/api');
+      const response = await fetch(`${BACKEND_URL}/api/service-provider-reports/available-volumes`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableVolumes(data);
+        console.log('BuyerCreateOrder: Available volumes loaded', data);
+      }
+    } catch (error) {
+      console.error('BuyerCreateOrder: Error loading available volumes:', error);
+    } finally {
+      setLoadingVolumes(false);
     }
   };
 
@@ -215,6 +239,24 @@ export default function BuyerCreateOrder() {
           <Text style={styles.headerSubtitle}>{buyerName}</Text>
           <Text style={styles.headerOrg}>{organizationName}</Text>
         </View>
+
+        {/* Available Volumes */}
+        {availableVolumes.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Available Volumes by Crop Type</Text>
+            <Text style={styles.subtitle}>Based on Service Provider Reports</Text>
+            
+            {availableVolumes.map((item, index) => (
+              <View key={index} style={styles.volumeCard}>
+                <View style={styles.volumeHeader}>
+                  <Text style={styles.volumeCropType}>{item.cropType}</Text>
+                  <Text style={styles.volumeWeek}>Week {item.collectionWeek}</Text>
+                </View>
+                <Text style={styles.volumeAmount}>{item.volumeLbs.toFixed(2)} LBS</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Crop Selection */}
         <View style={styles.section}>
@@ -536,5 +578,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.card,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+  },
+  volumeCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  volumeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  volumeCropType: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  volumeWeek: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  volumeAmount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
   },
 });
