@@ -15,14 +15,20 @@ export function registerRegulatorRoutes(app: App) {
         confirmEmail: string;
         firstName: string;
         lastName: string;
-        organizationName: string;
-        workIdFrontUrl: string;
-        workIdBackUrl: string;
+        organizationName?: string;
+        workIdFrontUrl?: string;
+        workIdBackUrl?: string;
         county: string;
         subCounty: string;
         ward: string;
-        coreMandates: string[];
+        coreMandates?: string[];
       };
+
+      // Validate required fields
+      if (!body.email || !body.firstName || !body.lastName) {
+        app.logger.warn({}, 'Missing required form fields for regulator registration');
+        return reply.status(400).send({ error: 'Missing required fields (email, firstName, lastName)' });
+      }
 
       // Validate email domain
       if (!isValidPaidEmailDomain(body.email)) {
@@ -36,6 +42,21 @@ export function registerRegulatorRoutes(app: App) {
         return reply.status(400).send({ error: 'Emails do not match' });
       }
 
+      // Validate work ID files - both or neither
+      if ((body.workIdFrontUrl && !body.workIdBackUrl) || (!body.workIdFrontUrl && body.workIdBackUrl)) {
+        app.logger.warn(
+          { hasFront: !!body.workIdFrontUrl, hasBack: !!body.workIdBackUrl },
+          'Both work ID URLs must be provided together if uploading'
+        );
+        return reply.status(400).send({ error: 'Both work ID front and back URLs must be provided together' });
+      }
+
+      if (body.workIdFrontUrl || body.workIdBackUrl) {
+        app.logger.info({ email: body.email }, 'Work ID files provided during registration');
+      } else {
+        app.logger.info({ email: body.email }, 'Work ID files not provided (optional)');
+      }
+
       // Create regulator user
       const result = await app.db
         .insert(schema.users)
@@ -44,18 +65,24 @@ export function registerRegulatorRoutes(app: App) {
           email: body.email,
           firstName: body.firstName,
           lastName: body.lastName,
-          organizationName: body.organizationName,
+          organizationName: body.organizationName || null,
           county: body.county,
           subCounty: body.subCounty,
           ward: body.ward,
-          workIdFrontUrl: body.workIdFrontUrl,
-          workIdBackUrl: body.workIdBackUrl,
-          coreMandates: body.coreMandates,
+          workIdFrontUrl: body.workIdFrontUrl || null,
+          workIdBackUrl: body.workIdBackUrl || null,
+          coreMandates: body.coreMandates && body.coreMandates.length > 0 ? body.coreMandates : null,
           registrationCompleted: true,
         })
         .returning();
 
-      app.logger.info({ regulatorId: result[0].id }, 'Regulator registered successfully');
+      app.logger.info(
+        {
+          regulatorId: result[0].id,
+          email: body.email,
+        },
+        'Regulator registered successfully'
+      );
 
       return {
         id: result[0].id,
@@ -63,6 +90,12 @@ export function registerRegulatorRoutes(app: App) {
         firstName: result[0].firstName,
         lastName: result[0].lastName,
         organizationName: result[0].organizationName,
+        county: result[0].county,
+        subCounty: result[0].subCounty,
+        ward: result[0].ward,
+        workIdFrontUrl: result[0].workIdFrontUrl,
+        workIdBackUrl: result[0].workIdBackUrl,
+        coreMandates: result[0].coreMandates,
       };
     } catch (error) {
       app.logger.error({ err: error }, 'Failed to register regulator');

@@ -51,42 +51,49 @@ export function registerBuyerRoutes(app: App) {
         return reply.status(400).send({ error: 'Emails do not match' });
       }
 
-      // Validate files provided
-      if (!workIdFrontFile || !workIdBackFile) {
+      // Handle work ID file uploads (optional)
+      let workIdFrontUrl: string | null = null;
+      let workIdBackUrl: string | null = null;
+
+      if (workIdFrontFile && workIdBackFile) {
+        app.logger.info({ email: formFields.email }, 'Starting file uploads');
+
+        // Upload work ID front file
+        app.logger.debug({ filename: workIdFrontFile.filename }, 'Converting front file to buffer');
+        const frontBuffer = await workIdFrontFile.toBuffer();
+        app.logger.debug({ size: frontBuffer.length }, 'Front file buffer created');
+
+        const frontKey = `work-ids/buyers/${Date.now()}-front-${workIdFrontFile.filename}`;
+        app.logger.debug({ key: frontKey }, 'Uploading front file to storage');
+        const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
+        app.logger.debug({ uploadedKey: uploadedFrontKey }, 'Front file uploaded, getting signed URL');
+
+        const frontUrlResult = await app.storage.getSignedUrl(uploadedFrontKey);
+        workIdFrontUrl = frontUrlResult.url;
+        app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded successfully');
+
+        // Upload work ID back file
+        app.logger.debug({ filename: workIdBackFile.filename }, 'Converting back file to buffer');
+        const backBuffer = await workIdBackFile.toBuffer();
+        app.logger.debug({ size: backBuffer.length }, 'Back file buffer created');
+
+        const backKey = `work-ids/buyers/${Date.now()}-back-${workIdBackFile.filename}`;
+        app.logger.debug({ key: backKey }, 'Uploading back file to storage');
+        const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
+        app.logger.debug({ uploadedKey: uploadedBackKey }, 'Back file uploaded, getting signed URL');
+
+        const backUrlResult = await app.storage.getSignedUrl(uploadedBackKey);
+        workIdBackUrl = backUrlResult.url;
+        app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded successfully');
+      } else if (workIdFrontFile || workIdBackFile) {
         app.logger.warn(
           { hasFront: !!workIdFrontFile, hasBack: !!workIdBackFile },
-          'Both work ID front and back files are required'
+          'Both work ID files must be provided together if uploading'
         );
-        return reply.status(400).send({ error: 'Both work ID front and back files are required' });
+        return reply.status(400).send({ error: 'Both work ID front and back files must be provided together' });
+      } else {
+        app.logger.info({ email: formFields.email }, 'Work ID files not provided (optional)');
       }
-
-      app.logger.info({ email: formFields.email }, 'Starting file uploads');
-
-      // Upload work ID front file
-      app.logger.debug({ filename: workIdFrontFile.filename }, 'Converting front file to buffer');
-      const frontBuffer = await workIdFrontFile.toBuffer();
-      app.logger.debug({ size: frontBuffer.length }, 'Front file buffer created');
-
-      const frontKey = `work-ids/buyers/${Date.now()}-front-${workIdFrontFile.filename}`;
-      app.logger.debug({ key: frontKey }, 'Uploading front file to storage');
-      const uploadedFrontKey = await app.storage.upload(frontKey, frontBuffer);
-      app.logger.debug({ uploadedKey: uploadedFrontKey }, 'Front file uploaded, getting signed URL');
-
-      const { url: workIdFrontUrl } = await app.storage.getSignedUrl(uploadedFrontKey);
-      app.logger.info({ workIdFront: frontKey }, 'Work ID front uploaded successfully');
-
-      // Upload work ID back file
-      app.logger.debug({ filename: workIdBackFile.filename }, 'Converting back file to buffer');
-      const backBuffer = await workIdBackFile.toBuffer();
-      app.logger.debug({ size: backBuffer.length }, 'Back file buffer created');
-
-      const backKey = `work-ids/buyers/${Date.now()}-back-${workIdBackFile.filename}`;
-      app.logger.debug({ key: backKey }, 'Uploading back file to storage');
-      const uploadedBackKey = await app.storage.upload(backKey, backBuffer);
-      app.logger.debug({ uploadedKey: uploadedBackKey }, 'Back file uploaded, getting signed URL');
-
-      const { url: workIdBackUrl } = await app.storage.getSignedUrl(uploadedBackKey);
-      app.logger.info({ workIdBack: backKey }, 'Work ID back uploaded successfully');
 
       // Create buyer user
       const result = await app.db
@@ -105,8 +112,8 @@ export function registerBuyerRoutes(app: App) {
           officeCity: formFields.officeCity || null,
           officeZipCode: formFields.officeZipCode || null,
           deliveryAirport: formFields.deliveryAirport || null,
-          workIdFrontUrl,
-          workIdBackUrl,
+          workIdFrontUrl: workIdFrontUrl || null,
+          workIdBackUrl: workIdBackUrl || null,
           registrationCompleted: true,
         })
         .returning();
