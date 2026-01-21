@@ -1,4 +1,5 @@
 
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect } from 'react';
 import { colors } from '@/styles/commonStyles';
 import { Stack } from 'expo-router';
@@ -11,6 +12,9 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
+  Image,
+  TextInput,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -21,9 +25,6 @@ interface DashboardData {
   totalAcreage: number;
   projectedProductionByCrop: Array<{ cropType: string; volumeKg: number }>;
   collectionEstimationByCrop: Array<{ cropType: string; weekNumber: number; volumeKg: number }>;
-  collectionVolumesByCrop: Array<{ cropType: string; volumeKg: number }>;
-  shippedVolumesByCrop: Array<{ cropType: string; volumeKg: number }>;
-  buyerOrdersByCrop: Array<{ cropType: string; volumeLbs: number }>;
 }
 
 export default function ServiceProviderDashboard() {
@@ -40,10 +41,15 @@ export default function ServiceProviderDashboard() {
     totalAcreage: 0,
     projectedProductionByCrop: [],
     collectionEstimationByCrop: [],
-    collectionVolumesByCrop: [],
-    shippedVolumesByCrop: [],
-    buyerOrdersByCrop: [],
   });
+
+  // Report entry fields
+  const [selectedCrop, setSelectedCrop] = useState('');
+  const [collectionWeek, setCollectionWeek] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [comments, setComments] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [showWeekPicker, setShowWeekPicker] = useState(false);
 
   useEffect(() => {
     console.log('ServiceProviderDashboard: Component mounted');
@@ -64,7 +70,8 @@ export default function ServiceProviderDashboard() {
       if (userId && userData) {
         const user = JSON.parse(userData);
         setServiceProviderId(userId);
-        setServiceProviderName(`${user.firstName} ${user.lastName}`);
+        const fullName = `${user.firstName} ${user.lastName}`;
+        setServiceProviderName(fullName);
         console.log('ServiceProviderDashboard: User data loaded', { userId });
       }
     } catch (error) {
@@ -119,6 +126,96 @@ export default function ServiceProviderDashboard() {
   const kgToLbs = (kg: number): number => {
     return kg * 2.20462;
   };
+
+  const getWeekNumber = (date: Date): number => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  };
+
+  const pickPhoto = async () => {
+    if (photos.length >= 5) {
+      Alert.alert('Maximum Photos', 'You can only upload up to 5 photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setPhotos([...photos, result.assets[0].uri]);
+      console.log('ServiceProviderDashboard: Photo added', result.assets[0].uri);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    setPhotos(newPhotos);
+    console.log('ServiceProviderDashboard: Photo removed at index', index);
+  };
+
+  const handleSubmitReport = async () => {
+    if (!selectedCrop) {
+      Alert.alert('Missing Information', 'Please select a crop type');
+      return;
+    }
+
+    if (!collectionWeek) {
+      Alert.alert('Missing Information', 'Please enter collection week');
+      return;
+    }
+
+    const weekNum = parseInt(collectionWeek);
+    if (isNaN(weekNum) || weekNum < 1 || weekNum > 53) {
+      Alert.alert('Invalid Week', 'Please enter a week number between 1 and 53');
+      return;
+    }
+
+    if (photos.length === 0) {
+      Alert.alert('Missing Photos', 'Please upload at least one photo of crop maturity');
+      return;
+    }
+
+    if (comments.trim().length === 0) {
+      Alert.alert('Missing Comments', 'Please add comments about crop maturity');
+      return;
+    }
+
+    if (comments.length > 160) {
+      Alert.alert('Comments Too Long', 'Comments must be 160 characters or less');
+      return;
+    }
+
+    setSubmittingReport(true);
+    console.log('ServiceProviderDashboard: Submitting report entry', {
+      selectedCrop,
+      collectionWeek: weekNum,
+      photoCount: photos.length,
+      commentsLength: comments.length,
+    });
+
+    try {
+      // TODO: Backend Integration - POST report entry to backend
+      // For now, just show success and reset form
+      Alert.alert('Success', 'Report entry submitted successfully');
+      setSelectedCrop('');
+      setCollectionWeek('');
+      setPhotos([]);
+      setComments('');
+      loadDashboardData(); // Reload dashboard data
+    } catch (error) {
+      console.error('ServiceProviderDashboard: Error submitting report:', error);
+      Alert.alert('Error', 'Failed to submit report entry');
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
+  const farmersVisitedValue = dashboardData.farmersVisited;
+  const totalAcreageValue = dashboardData.totalAcreage.toFixed(1);
 
   return (
     <View style={styles.container}>
@@ -221,19 +318,8 @@ export default function ServiceProviderDashboard() {
                   size={32}
                   color={colors.primary}
                 />
-                <Text style={styles.summaryValue}>{dashboardData.farmersVisited}</Text>
+                <Text style={styles.summaryValue}>{farmersVisitedValue}</Text>
                 <Text style={styles.summaryLabel}>Farmers Visited</Text>
-              </View>
-
-              <View style={styles.summaryCard}>
-                <IconSymbol
-                  ios_icon_name="leaf"
-                  android_material_icon_name="eco"
-                  size={32}
-                  color={colors.primary}
-                />
-                <Text style={styles.summaryValue}>{dashboardData.cropsCovered}</Text>
-                <Text style={styles.summaryLabel}>Crops Covered</Text>
               </View>
 
               <View style={styles.summaryCard}>
@@ -243,97 +329,148 @@ export default function ServiceProviderDashboard() {
                   size={32}
                   color={colors.primary}
                 />
-                <Text style={styles.summaryValue}>{dashboardData.totalAcreage.toFixed(1)}</Text>
+                <Text style={styles.summaryValue}>{totalAcreageValue}</Text>
                 <Text style={styles.summaryLabel}>Total Acreage</Text>
               </View>
             </View>
 
             {/* Projected Production */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Projected Production by Crop</Text>
+              <Text style={styles.sectionTitle}>Projected Production Volume (LBS) per Crop</Text>
               {dashboardData.projectedProductionByCrop.length === 0 ? (
                 <Text style={styles.emptyText}>No data available</Text>
               ) : (
-                dashboardData.projectedProductionByCrop.map((item, index) => (
-                  <View key={index} style={styles.dataRow}>
-                    <Text style={styles.dataLabel}>{item.cropType}</Text>
-                    <Text style={styles.dataValue}>
-                      {item.volumeKg.toFixed(0)} KG / {kgToLbs(item.volumeKg).toFixed(0)} LBS
-                    </Text>
-                  </View>
-                ))
+                dashboardData.projectedProductionByCrop.map((item, index) => {
+                  const volumeLbs = kgToLbs(item.volumeKg);
+                  return (
+                    <View key={index} style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>{item.cropType}</Text>
+                      <Text style={styles.dataValue}>{volumeLbs.toFixed(0)} LBS</Text>
+                    </View>
+                  );
+                })
               )}
             </View>
 
-            {/* Collection Estimation */}
+            {/* Estimated Collection Week */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Collection Estimation by Crop</Text>
+              <Text style={styles.sectionTitle}>Estimated Collection Week per Crop</Text>
               {dashboardData.collectionEstimationByCrop.length === 0 ? (
                 <Text style={styles.emptyText}>No data available</Text>
               ) : (
                 dashboardData.collectionEstimationByCrop.map((item, index) => (
                   <View key={index} style={styles.dataRow}>
-                    <View>
-                      <Text style={styles.dataLabel}>{item.cropType}</Text>
-                      <Text style={styles.dataSubtext}>Week {item.weekNumber}</Text>
+                    <Text style={styles.dataLabel}>{item.cropType}</Text>
+                    <Text style={styles.dataValue}>Week {item.weekNumber}</Text>
+                  </View>
+                ))
+              )}
+            </View>
+
+            {/* Report Entry Section */}
+            <View style={styles.reportSection}>
+              <Text style={styles.reportTitle}>Report Entry</Text>
+
+              {/* Crop Selection */}
+              <View style={styles.reportField}>
+                <Text style={styles.fieldLabel}>Select Crop Type</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter crop type"
+                  placeholderTextColor={colors.textSecondary}
+                  value={selectedCrop}
+                  onChangeText={setSelectedCrop}
+                />
+              </View>
+
+              {/* Collection Week Input */}
+              <View style={styles.reportField}>
+                <Text style={styles.fieldLabel}>
+                  Input Crop Maturity/Collection Week (1-53)
+                </Text>
+                <Text style={styles.fieldSubtext}>
+                  Collections scheduled at least 7 days ahead
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter week number (1-53)"
+                  placeholderTextColor={colors.textSecondary}
+                  value={collectionWeek}
+                  onChangeText={setCollectionWeek}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+              </View>
+
+              {/* Photo Upload */}
+              <View style={styles.reportField}>
+                <Text style={styles.fieldLabel}>
+                  Picture Evidence of Crop Maturity
+                </Text>
+                <Text style={styles.fieldSubtext}>Upload up to 5 pictures</Text>
+
+                <View style={styles.photosContainer}>
+                  {photos.map((photo, index) => (
+                    <View key={index} style={styles.photoWrapper}>
+                      <Image source={{ uri: photo }} style={styles.photoPreview} />
+                      <TouchableOpacity
+                        style={styles.removePhotoButton}
+                        onPress={() => removePhoto(index)}
+                      >
+                        <IconSymbol
+                          ios_icon_name="xmark"
+                          android_material_icon_name="close"
+                          size={16}
+                          color={colors.card}
+                        />
+                      </TouchableOpacity>
                     </View>
-                    <Text style={styles.dataValue}>
-                      {item.volumeKg.toFixed(0)} KG
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
+                  ))}
 
-            {/* Collection Volumes */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Collection Volumes by Crop</Text>
-              {dashboardData.collectionVolumesByCrop.length === 0 ? (
-                <Text style={styles.emptyText}>No data available</Text>
-              ) : (
-                dashboardData.collectionVolumesByCrop.map((item, index) => (
-                  <View key={index} style={styles.dataRow}>
-                    <Text style={styles.dataLabel}>{item.cropType}</Text>
-                    <Text style={styles.dataValue}>
-                      {item.volumeKg.toFixed(0)} KG / {kgToLbs(item.volumeKg).toFixed(0)} LBS
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
+                  {photos.length < 5 && (
+                    <TouchableOpacity style={styles.addPhotoButton} onPress={pickPhoto}>
+                      <IconSymbol
+                        ios_icon_name="camera"
+                        android_material_icon_name="camera"
+                        size={32}
+                        color={colors.primary}
+                      />
+                      <Text style={styles.addPhotoText}>Add Photo</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
 
-            {/* Shipped Volumes */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Shipped Volumes by Crop</Text>
-              {dashboardData.shippedVolumesByCrop.length === 0 ? (
-                <Text style={styles.emptyText}>No data available</Text>
-              ) : (
-                dashboardData.shippedVolumesByCrop.map((item, index) => (
-                  <View key={index} style={styles.dataRow}>
-                    <Text style={styles.dataLabel}>{item.cropType}</Text>
-                    <Text style={styles.dataValue}>
-                      {item.volumeKg.toFixed(0)} KG / {kgToLbs(item.volumeKg).toFixed(0)} LBS
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
+              {/* Comments */}
+              <View style={styles.reportField}>
+                <Text style={styles.fieldLabel}>Summary Comments (Max 160 characters)</Text>
+                <TextInput
+                  style={styles.commentsInput}
+                  placeholder="Add comments about crop maturity..."
+                  placeholderTextColor={colors.textSecondary}
+                  value={comments}
+                  onChangeText={setComments}
+                  maxLength={160}
+                  multiline
+                  numberOfLines={4}
+                />
+                <Text style={styles.characterCount}>
+                  {comments.length}/160 characters
+                </Text>
+              </View>
 
-            {/* Buyer Orders */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Buyer Orders by Crop</Text>
-              {dashboardData.buyerOrdersByCrop.length === 0 ? (
-                <Text style={styles.emptyText}>No data available</Text>
-              ) : (
-                dashboardData.buyerOrdersByCrop.map((item, index) => (
-                  <View key={index} style={styles.dataRow}>
-                    <Text style={styles.dataLabel}>{item.cropType}</Text>
-                    <Text style={styles.dataValue}>
-                      {item.volumeLbs.toFixed(0)} LBS
-                    </Text>
-                  </View>
-                ))
-              )}
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[styles.submitButton, submittingReport && styles.submitButtonDisabled]}
+                onPress={handleSubmitReport}
+                disabled={submittingReport}
+              >
+                {submittingReport ? (
+                  <ActivityIndicator color={colors.card} />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit Report Entry</Text>
+                )}
+              </TouchableOpacity>
             </View>
           </>
         )}
@@ -418,7 +555,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    minWidth: '30%',
+    minWidth: '45%',
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
@@ -459,11 +596,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  dataSubtext: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
   dataValue: {
     fontSize: 16,
     fontWeight: '600',
@@ -474,5 +606,113 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  reportSection: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 20,
+  },
+  reportTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  reportField: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  fieldSubtext: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  textInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: colors.text,
+  },
+  photosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  photoWrapper: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+  },
+  photoPreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addPhotoButton: {
+    width: 100,
+    height: 100,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  commentsInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: colors.text,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'right',
+  },
+  submitButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
   },
 });
