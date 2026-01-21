@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { colors } from '@/styles/commonStyles';
-import * as ImagePicker from 'expo-image-picker';
 import { Stack, router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import {
@@ -14,7 +13,6 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -35,8 +33,6 @@ export default function ServiceProviderRegistration() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
-  const [workIdFront, setWorkIdFront] = useState<string | null>(null);
-  const [workIdBack, setWorkIdBack] = useState<string | null>(null);
   const [county, setCounty] = useState('');
   const [subCounty, setSubCounty] = useState('');
   const [ward, setWard] = useState('');
@@ -221,25 +217,6 @@ export default function ServiceProviderRegistration() {
     }
   };
 
-  const pickImage = async (type: 'front' | 'back') => {
-    console.log('ServiceProviderRegistration: Picking image for', type);
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      if (type === 'front') {
-        setWorkIdFront(result.assets[0].uri);
-      } else {
-        setWorkIdBack(result.assets[0].uri);
-      }
-      console.log('ServiceProviderRegistration: Image selected', type);
-    }
-  };
-
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -287,14 +264,6 @@ export default function ServiceProviderRegistration() {
   };
 
   const validateStep2 = (): boolean => {
-    if (!workIdFront || !workIdBack) {
-      Alert.alert('Validation Error', 'Please upload both front and back of your work ID');
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep3 = (): boolean => {
     if (!county || !subCounty || !ward) {
       Alert.alert('Validation Error', 'Please select county, sub-county, and ward');
       return false;
@@ -310,9 +279,8 @@ export default function ServiceProviderRegistration() {
     console.log('ServiceProviderRegistration: Moving to next step', step);
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
-    if (step === 3 && !validateStep3()) return;
 
-    if (step < 3) {
+    if (step < 2) {
       setStep(step + 1);
     } else {
       handleSubmit();
@@ -347,24 +315,7 @@ export default function ServiceProviderRegistration() {
       formData.append('ward', ward);
       formData.append('coreMandates', JSON.stringify(coreMandates));
 
-      // Add work ID images
-      if (workIdFront) {
-        formData.append('workIdFront', {
-          uri: workIdFront,
-          type: 'image/jpeg',
-          name: 'work-id-front.jpg',
-        } as any);
-      }
-
-      if (workIdBack) {
-        formData.append('workIdBack', {
-          uri: workIdBack,
-          type: 'image/jpeg',
-          name: 'work-id-back.jpg',
-        } as any);
-      }
-
-      console.log('ServiceProviderRegistration: Submitting form data with multipart/form-data');
+      console.log('ServiceProviderRegistration: Submitting form data');
       const response = await fetch(`${BACKEND_URL}/api/service-providers/register`, {
         method: 'POST',
         body: formData,
@@ -531,53 +482,6 @@ export default function ServiceProviderRegistration() {
   );
 
   const renderStep2 = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Work ID Upload</Text>
-      <Text style={styles.stepSubtitle}>Please upload clear photos of your work ID</Text>
-
-      <Text style={styles.label}>Work ID - Front *</Text>
-      <TouchableOpacity
-        style={styles.imageUploadButton}
-        onPress={() => pickImage('front')}
-      >
-        {workIdFront ? (
-          <Image source={{ uri: workIdFront }} style={styles.uploadedImage} />
-        ) : (
-          <View style={styles.uploadPlaceholder}>
-            <IconSymbol
-              ios_icon_name="camera"
-              android_material_icon_name="camera"
-              size={48}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.uploadText}>Tap to upload front</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      <Text style={styles.label}>Work ID - Back *</Text>
-      <TouchableOpacity
-        style={styles.imageUploadButton}
-        onPress={() => pickImage('back')}
-      >
-        {workIdBack ? (
-          <Image source={{ uri: workIdBack }} style={styles.uploadedImage} />
-        ) : (
-          <View style={styles.uploadPlaceholder}>
-            <IconSymbol
-              ios_icon_name="camera"
-              android_material_icon_name="camera"
-              size={48}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.uploadText}>Tap to upload back</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderStep3 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Location & Mandate</Text>
 
@@ -748,7 +652,7 @@ export default function ServiceProviderRegistration() {
 
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
-        {[1, 2, 3].map((s) => (
+        {[1, 2].map((s) => (
           <View
             key={s}
             style={[
@@ -766,7 +670,6 @@ export default function ServiceProviderRegistration() {
       >
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
       </ScrollView>
 
       {/* Navigation Buttons */}
@@ -789,7 +692,7 @@ export default function ServiceProviderRegistration() {
             <ActivityIndicator color={colors.card} />
           ) : (
             <Text style={styles.buttonPrimaryText}>
-              {step === 3 ? 'Complete Registration' : 'Next'}
+              {step === 2 ? 'Complete Registration' : 'Next'}
             </Text>
           )}
         </TouchableOpacity>
@@ -835,11 +738,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
-  },
-  stepSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
   },
   label: {
     fontSize: 16,
@@ -943,29 +841,6 @@ const styles = StyleSheet.create({
   mandateChipText: {
     fontSize: 14,
     color: colors.primary,
-  },
-  imageUploadButton: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-  },
-  uploadPlaceholder: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  uploadText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  uploadedImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 12,
   },
   buttonContainer: {
     flexDirection: 'row',

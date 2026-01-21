@@ -1,8 +1,6 @@
 
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import {
@@ -15,7 +13,6 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
@@ -57,13 +54,7 @@ export default function RegulatorRegistration() {
   const [emailValid, setEmailValid] = useState(false);
   const [confirmEmailValid, setConfirmEmailValid] = useState(false);
 
-  // Step 2: Work ID Upload
-  const [workIdFront, setWorkIdFront] = useState<string | null>(null);
-  const [workIdBack, setWorkIdBack] = useState<string | null>(null);
-  const [uploadingFront, setUploadingFront] = useState(false);
-  const [uploadingBack, setUploadingBack] = useState(false);
-
-  // Step 3: Location and Mandate
+  // Step 2: Location and Mandate
   const [locationData, setLocationData] = useState<LocationData>({
     counties: [],
     subCounties: [],
@@ -224,60 +215,6 @@ export default function RegulatorRegistration() {
     });
   };
 
-  const pickImage = async (type: 'front' | 'back') => {
-    console.log('RegulatorRegistration: Picking image for', type);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const uri = result.assets[0].uri;
-        
-        // Upload to backend
-        if (type === 'front') {
-          setUploadingFront(true);
-        } else {
-          setUploadingBack(true);
-        }
-
-        const formData = new FormData();
-        formData.append('image', {
-          uri,
-          type: 'image/jpeg',
-          name: `work-id-${type}.jpg`,
-        } as any);
-
-        const response = await fetch(api.uploadWorkId(), {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-        
-        if (type === 'front') {
-          setWorkIdFront(data.url);
-          setUploadingFront(false);
-          console.log('RegulatorRegistration: Front ID uploaded:', data.url);
-        } else {
-          setWorkIdBack(data.url);
-          setUploadingBack(false);
-          console.log('RegulatorRegistration: Back ID uploaded:', data.url);
-        }
-      }
-    } catch (error) {
-      console.error('RegulatorRegistration: Error picking/uploading image:', error);
-      if (type === 'front') {
-        setUploadingFront(false);
-      } else {
-        setUploadingBack(false);
-      }
-      Alert.alert('Error', 'Failed to upload image. Please try again.');
-    }
-  };
-
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -316,18 +253,6 @@ export default function RegulatorRegistration() {
   };
 
   const validateStep2 = (): boolean => {
-    if (!workIdFront) {
-      Alert.alert('Validation Error', 'Please upload the front of your work ID');
-      return false;
-    }
-    if (!workIdBack) {
-      Alert.alert('Validation Error', 'Please upload the back of your work ID');
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep3 = (): boolean => {
     if (!selectedCounty) {
       Alert.alert('Validation Error', 'Please select a county');
       return false;
@@ -351,8 +276,6 @@ export default function RegulatorRegistration() {
     console.log('RegulatorRegistration: Moving to next step from', step);
     if (step === 1 && validateStep1()) {
       setStep(2);
-    } else if (step === 2 && validateStep2()) {
-      setStep(3);
     }
   };
 
@@ -365,7 +288,7 @@ export default function RegulatorRegistration() {
 
   const handleSubmit = async () => {
     console.log('RegulatorRegistration: Submitting registration');
-    if (!validateStep3()) {
+    if (!validateStep2()) {
       return;
     }
 
@@ -382,8 +305,6 @@ export default function RegulatorRegistration() {
           firstName,
           lastName,
           organizationName,
-          workIdFrontUrl: workIdFront,
-          workIdBackUrl: workIdBack,
           county: selectedCounty!.countyName,
           subCounty: selectedSubCounty,
           ward: selectedWard!.wardName,
@@ -559,83 +480,6 @@ export default function RegulatorRegistration() {
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Work ID Upload</Text>
-      <Text style={styles.subtitle}>Please upload both sides of your work ID</Text>
-
-      <View style={styles.uploadSection}>
-        <Text style={styles.label}>Front of Work ID *</Text>
-        {workIdFront ? (
-          <View style={styles.imagePreview}>
-            <Image source={{ uri: workIdFront }} style={styles.previewImage} />
-            <TouchableOpacity
-              style={styles.changeImageButton}
-              onPress={() => pickImage('front')}
-            >
-              <Text style={styles.changeImageText}>Change Image</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => pickImage('front')}
-            disabled={uploadingFront}
-          >
-            {uploadingFront ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : (
-              <>
-                <IconSymbol
-                  ios_icon_name="camera"
-                  android_material_icon_name="camera"
-                  size={32}
-                  color={colors.primary}
-                />
-                <Text style={styles.uploadButtonText}>Upload Front</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.uploadSection}>
-        <Text style={styles.label}>Back of Work ID *</Text>
-        {workIdBack ? (
-          <View style={styles.imagePreview}>
-            <Image source={{ uri: workIdBack }} style={styles.previewImage} />
-            <TouchableOpacity
-              style={styles.changeImageButton}
-              onPress={() => pickImage('back')}
-            >
-              <Text style={styles.changeImageText}>Change Image</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => pickImage('back')}
-            disabled={uploadingBack}
-          >
-            {uploadingBack ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : (
-              <>
-                <IconSymbol
-                  ios_icon_name="camera"
-                  android_material_icon_name="camera"
-                  size={32}
-                  color={colors.primary}
-                />
-                <Text style={styles.uploadButtonText}>Upload Back</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-
-  const renderStep3 = () => (
-    <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Location & Mandate</Text>
 
       <Text style={styles.label}>County *</Text>
@@ -797,17 +641,16 @@ export default function RegulatorRegistration() {
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${(step / 3) * 100}%` }]} />
+          <View style={[styles.progressFill, { width: `${(step / 2) * 100}%` }]} />
         </View>
         <Text style={styles.progressText}>
-          Step {step} of 3
+          Step {step} of 2
         </Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {step === 1 && renderStep1()}
         {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
       </ScrollView>
 
       {/* Navigation Buttons */}
@@ -817,7 +660,7 @@ export default function RegulatorRegistration() {
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
         )}
-        {step < 3 ? (
+        {step < 2 ? (
           <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
@@ -891,11 +734,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
   label: {
     fontSize: 16,
     fontWeight: '600',
@@ -958,46 +796,6 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     color: colors.text,
-  },
-  uploadSection: {
-    marginTop: 8,
-  },
-  uploadButton: {
-    backgroundColor: colors.card,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  uploadButtonText: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  imagePreview: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  previewImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    resizeMode: 'cover',
-  },
-  changeImageButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  changeImageText: {
-    color: colors.card,
-    fontSize: 14,
-    fontWeight: '600',
   },
   mandateContainer: {
     flexDirection: 'row',
