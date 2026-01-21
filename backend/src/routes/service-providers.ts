@@ -4,6 +4,9 @@ import * as schema from '../db/schema.js';
 import type { App } from '../index.js';
 import { isValidPaidEmailDomain, emailsMatch, isValidCollectionEstimationWeek, kgToLbs } from '../utils/validation.js';
 
+// Import buyer orders for dashboard
+// (used to get buyer orders by crop)
+
 // Crop yield matrix (kg per acre)
 const CROP_YIELDS: Record<string, number> = {
   avocado: 5000,
@@ -411,80 +414,75 @@ export function registerServiceProviderRoutes(app: App) {
           .filter((p) => p?.farmAcreage)
           .reduce((sum, p) => sum + parseFloat(p!.farmAcreage!.toString()), 0);
 
-        // Projected production by crop (from producer data)
-        const projectedProductionByCrop: { cropType: string; volumeKg: number }[] = [];
+        // Projected production by crop (from producer data) - in LBS
+        const projectedProductionByCrop: { cropType: string; volumeLbs: number }[] = [];
         const cropMap = new Map<string, number>();
         producers.forEach((producer) => {
           if (producer?.cropType && producer?.farmAcreage) {
             const cropType = producer.cropType.toLowerCase();
             const yieldPerAcre = CROP_YIELDS[cropType] || 0;
             const acreage = parseFloat(producer.farmAcreage.toString());
-            const volume = yieldPerAcre * acreage;
+            const volumeKg = yieldPerAcre * acreage;
 
             const existing = cropMap.get(producer.cropType) || 0;
-            cropMap.set(producer.cropType, existing + volume);
+            cropMap.set(producer.cropType, existing + volumeKg);
           }
         });
 
         cropMap.forEach((volumeKg, cropType) => {
-          projectedProductionByCrop.push({ cropType, volumeKg: Math.round(volumeKg * 100) / 100 });
+          const volumeLbs = kgToLbs(volumeKg);
+          projectedProductionByCrop.push({ cropType, volumeLbs: Math.round(volumeLbs * 100) / 100 });
         });
 
-        // Collection estimation by crop
-        const collectionEstimationByCrop: { cropType: string; weekNumber: number; volumeKg: number }[] = [];
+        // Collection estimation by crop - in LBS
+        const collectionEstimationByCrop: { cropType: string; weekNumber: number; volumeLbs: number }[] = [];
         visits.forEach((visit) => {
           if (visit.collectedCropType && visit.collectionEstimationWeek && visit.collectedVolumeKg) {
+            const volumeKg = parseFloat(visit.collectedVolumeKg.toString());
+            const volumeLbs = kgToLbs(volumeKg);
             collectionEstimationByCrop.push({
               cropType: visit.collectedCropType,
               weekNumber: visit.collectionEstimationWeek,
-              volumeKg: parseFloat(visit.collectedVolumeKg.toString()),
+              volumeLbs: Math.round(volumeLbs * 100) / 100,
             });
           }
         });
 
-        // Collection volumes by crop (actual collected)
-        const collectionVolumesByCrop: { cropType: string; volumeKg: number }[] = [];
-        const collectionMap = new Map<string, number>();
-        visits.forEach((visit) => {
-          if (visit.collectedCropType && visit.collectedVolumeKg) {
-            const existing = collectionMap.get(visit.collectedCropType) || 0;
-            collectionMap.set(
-              visit.collectedCropType,
-              existing + parseFloat(visit.collectedVolumeKg.toString())
-            );
-          }
-        });
-        collectionMap.forEach((volumeKg, cropType) => {
-          collectionVolumesByCrop.push({ cropType, volumeKg });
-        });
-
-        // Shipped volumes by crop
-        const shippedVolumesByCrop: { cropType: string; volumeKg: number }[] = [];
-        const shippedMap = new Map<string, number>();
-        visits.forEach((visit) => {
-          if (visit.shippedCropType && visit.shippedVolumeKg) {
-            const existing = shippedMap.get(visit.shippedCropType) || 0;
-            shippedMap.set(
-              visit.shippedCropType,
-              existing + parseFloat(visit.shippedVolumeKg.toString())
-            );
-          }
-        });
-        shippedMap.forEach((volumeKg, cropType) => {
-          shippedVolumesByCrop.push({ cropType, volumeKg });
-        });
-
-        // Buyer orders by crop (placeholder)
+        // Buyer orders by crop - in LBS
         const buyerOrdersByCrop: { cropType: string; volumeLbs: number }[] = [];
+        const buyerOrdersMap = new Map<string, number>();
+
+        // Get buyer orders for this time period (optional)
+        let buyerOrders = await app.db.query.buyerOrders.findMany({
+          where: eq(schema.buyerOrders.status, 'confirmed'),
+        });
+
+        // If date range provided, filter buyer orders
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          buyerOrders = buyerOrders.filter((order) => {
+            const orderDate = order.createdAt;
+            return orderDate >= start && orderDate <= end;
+          });
+        }
+
+        buyerOrders.forEach((order) => {
+          const volumeKg = parseFloat(order.quantityKg.toString());
+          const volumeLbs = kgToLbs(volumeKg);
+          const existing = buyerOrdersMap.get(order.cropType) || 0;
+          buyerOrdersMap.set(order.cropType, existing + volumeLbs);
+        });
+
+        buyerOrdersMap.forEach((volumeLbs, cropType) => {
+          buyerOrdersByCrop.push({ cropType, volumeLbs: Math.round(volumeLbs * 100) / 100 });
+        });
 
         const dashboard = {
           farmersVisited,
-          cropsCovered: cropsCovered.size,
           totalAcreage: Math.round(totalAcreage * 100) / 100,
           projectedProductionByCrop,
           collectionEstimationByCrop,
-          collectionVolumesByCrop,
-          shippedVolumesByCrop,
           buyerOrdersByCrop,
         };
 

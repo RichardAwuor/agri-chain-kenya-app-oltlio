@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import * as schema from '../db/schema.js';
 import type { App } from '../index.js';
+import { kgToLbs } from '../utils/validation.js';
 
 // Crop yield matrix (kg per acre)
 const CROP_YIELDS: Record<string, number> = {
@@ -20,8 +21,10 @@ export function registerRegulatorVisitRoutes(app: App) {
       visitDate: string;
       visitLat: number;
       visitLng: number;
-      comments: string;
-      photoUrls?: string[];
+      comments?: string;
+      spacingCompliant?: boolean;
+      standardsAdherenceNotes?: string;
+      photos?: string[];
     };
 
     app.logger.info(
@@ -34,6 +37,11 @@ export function registerRegulatorVisitRoutes(app: App) {
     );
 
     try {
+      // Validate and truncate notes to 160 chars
+      const standardsNotes = body.standardsAdherenceNotes
+        ? body.standardsAdherenceNotes.substring(0, 160)
+        : null;
+
       // Create the visit record
       const visitResult = await app.db
         .insert(schema.regulatorVisits)
@@ -43,25 +51,38 @@ export function registerRegulatorVisitRoutes(app: App) {
           visitDate: new Date(body.visitDate),
           visitLat: body.visitLat.toString(),
           visitLng: body.visitLng.toString(),
-          comments: body.comments.substring(0, 160) || null, // Enforce 160 char limit
+          comments: body.comments ? body.comments.substring(0, 160) : null,
+          spacingCompliant: body.spacingCompliant ?? null,
+          standardsAdherenceNotes: standardsNotes,
         })
         .returning();
 
       const visitId = visitResult[0].id;
 
-      // Add photos if provided
-      if (body.photoUrls && body.photoUrls.length > 0) {
-        const photos = body.photoUrls.map((url) => ({
+      // Add photos if provided (max 5)
+      if (body.photos && body.photos.length > 0) {
+        const photosToAdd = body.photos.slice(0, 5).map((url) => ({
           visitId,
           photoUrl: url,
         }));
 
-        await app.db.insert(schema.visitPhotos).values(photos);
-        app.logger.info({ visitId, photoCount: photos.length }, 'Visit photos created');
+        await app.db.insert(schema.visitPhotos).values(photosToAdd);
+        app.logger.info({ visitId, photoCount: photosToAdd.length }, 'Visit photos created');
       }
 
       app.logger.info({ visitId }, 'Regulator visit created successfully');
-      return { visit: visitResult[0] };
+      return {
+        id: visitResult[0].id,
+        regulatorId: visitResult[0].regulatorId,
+        producerId: visitResult[0].producerId,
+        visitDate: visitResult[0].visitDate,
+        visitLat: visitResult[0].visitLat,
+        visitLng: visitResult[0].visitLng,
+        comments: visitResult[0].comments,
+        spacingCompliant: visitResult[0].spacingCompliant,
+        standardsAdherenceNotes: visitResult[0].standardsAdherenceNotes,
+        createdAt: visitResult[0].createdAt,
+      };
     } catch (error) {
       app.logger.error(
         { err: error, regulatorId: body.regulatorId, producerId: body.producerId },
@@ -101,6 +122,8 @@ export function registerRegulatorVisitRoutes(app: App) {
             visitLat: visit.visitLat,
             visitLng: visit.visitLng,
             comments: visit.comments,
+            spacingCompliant: visit.spacingCompliant,
+            standardsAdherenceNotes: visit.standardsAdherenceNotes,
             photos: photos.map((p) => ({ id: p.id, photoUrl: p.photoUrl })),
             createdAt: visit.createdAt,
           };
@@ -166,20 +189,26 @@ export function registerRegulatorVisitRoutes(app: App) {
           .filter((p) => p?.farmAcreage)
           .reduce((sum, p) => sum + parseFloat(p!.farmAcreage!.toString()), 0);
 
-        // Calculate projected volume per crop
+        // Calculate projected volume per crop (in LBS)
         const projectedVolumePerCrop: Record<string, number> = {};
         producers.forEach((producer) => {
           if (producer?.cropType && producer?.farmAcreage) {
             const cropType = producer.cropType.toLowerCase();
             const yieldPerAcre = CROP_YIELDS[cropType] || 0;
             const acreage = parseFloat(producer.farmAcreage.toString());
-            const volume = yieldPerAcre * acreage;
+            const volumeKg = yieldPerAcre * acreage;
+            const volumeLbs = kgToLbs(volumeKg);
 
             if (!projectedVolumePerCrop[producer.cropType]) {
               projectedVolumePerCrop[producer.cropType] = 0;
             }
-            projectedVolumePerCrop[producer.cropType] += volume;
+            projectedVolumePerCrop[producer.cropType] += volumeLbs;
           }
+        });
+
+        // Round all volumes to 2 decimal places
+        Object.keys(projectedVolumePerCrop).forEach((cropType) => {
+          projectedVolumePerCrop[cropType] = Math.round(projectedVolumePerCrop[cropType] * 100) / 100;
         });
 
         const dashboard = {

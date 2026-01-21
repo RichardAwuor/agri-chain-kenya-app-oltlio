@@ -91,6 +91,8 @@ export const regulatorVisits = pgTable(
     visitLat: decimal('visit_lat', { precision: 10, scale: 8 }).notNull(),
     visitLng: decimal('visit_lng', { precision: 11, scale: 8 }).notNull(),
     comments: text('comments'),
+    spacingCompliant: boolean('spacing_compliant'),
+    standardsAdherenceNotes: text('standards_adherence_notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({
