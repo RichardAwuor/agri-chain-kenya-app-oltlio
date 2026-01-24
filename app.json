@@ -1,9 +1,8 @@
-
 {
   "expo": {
     "name": "FRESH-Start",
     "slug": "fresh-start",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
     "userInterfaceStyle": "automatic",
@@ -26,7 +25,8 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.freshstart.kenya"
+      "package": "com.simphoni.fresh-start",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
