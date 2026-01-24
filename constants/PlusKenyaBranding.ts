@@ -3,11 +3,11 @@
  * FRESH-Start Branding Constants
  * 
  * Official brand colors: Black, Red, Green, White (Kenya flag colors)
- * Slogan: "Integrating Kenya into global trade"
+ * Slogan: "KENYA into global trade"
  */
 
 export const FRESH_START_BRANDING = {
-  slogan: 'Integrating Kenya into global trade',
+  slogan: 'KENYA into global trade',
   
   colors: {
     black: '#000000',
