@@ -5,7 +5,7 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { router } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PLUS_KENYA_BRANDING } from "@/constants/PlusKenyaBranding";
+import { FRESH_START_BRANDING } from "@/constants/PlusKenyaBranding";
 
 type UserType = 'producer' | 'regulator' | 'service_provider' | 'buyer' | null;
 
@@ -143,9 +143,9 @@ export default function HomeScreen() {
             resizeMode="contain"
           />
           <View style={styles.flagColors}>
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.black }]} />
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.red }]} />
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.green }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.black }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.red }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.green }]} />
           </View>
         </View>
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
-import { PLUS_KENYA_BRANDING } from '@/constants/PlusKenyaBranding';
+import { FRESH_START_BRANDING } from '@/constants/PlusKenyaBranding';
 
 export default function WelcomeScreen() {
   console.log('WelcomeScreen: Rendering welcome screen');
@@ -28,13 +28,13 @@ export default function WelcomeScreen() {
       <Text style={styles.appName}>FRESH-Start</Text>
 
       {/* Slogan */}
-      <Text style={styles.slogan}>{PLUS_KENYA_BRANDING.slogan}</Text>
+      <Text style={styles.slogan}>{FRESH_START_BRANDING.slogan}</Text>
 
       {/* Flag Colors Divider */}
       <View style={styles.flagColors}>
-        <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.black }]} />
-        <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.red }]} />
-        <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.green }]} />
+        <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.black }]} />
+        <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.red }]} />
+        <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.green }]} />
       </View>
 
       {/* Welcome Text */}

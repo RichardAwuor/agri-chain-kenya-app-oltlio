@@ -6,7 +6,7 @@
  * Slogan: "Integrating Kenya into global trade"
  */
 
-export const PLUS_KENYA_BRANDING = {
+export const FRESH_START_BRANDING = {
   slogan: 'Integrating Kenya into global trade',
   
   colors: {
