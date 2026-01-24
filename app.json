@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PLUS-Kenya",
-    "slug": "PLUS-Kenya",
+    "name": "FRESH-Start",
+    "slug": "FRESH-Start",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
@@ -45,5 +45,5 @@
       "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
     }
   },
-  "scheme": "PLUS-Kenya"
+  "scheme": "FRESH-Start"
 }

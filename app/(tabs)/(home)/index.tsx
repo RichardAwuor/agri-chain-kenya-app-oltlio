@@ -188,7 +188,7 @@ export default function HomeScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Powered by PLUS-Kenya Initiative
+            Powered by FRESH-Start Initiative
           </Text>
           <Text style={styles.footerSubtext}>
             Connecting farmers, regulators, service providers, and buyers

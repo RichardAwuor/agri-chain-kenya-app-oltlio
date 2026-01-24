@@ -374,7 +374,7 @@ export default function ProfileScreen() {
               color={colors.primary}
             />
             <Text style={styles.infoText}>
-              You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type using the PLUS-Kenya crop matrix.
+              You can update your crop type before each planting season. Projected harvest is calculated based on your farm acreage and crop type using the FRESH-Start crop matrix.
             </Text>
           </View>
         )}

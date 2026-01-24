@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
       </View>
 
       {/* App Name */}
-      <Text style={styles.appName}>PLUS-Kenya</Text>
+      <Text style={styles.appName}>FRESH-Start</Text>
 
       {/* Slogan */}
       <Text style={styles.slogan}>{PLUS_KENYA_BRANDING.slogan}</Text>
@@ -38,7 +38,7 @@ export default function WelcomeScreen() {
       </View>
 
       {/* Welcome Text */}
-      <Text style={styles.welcomeText}>Welcome to PLUS-Kenya</Text>
+      <Text style={styles.welcomeText}>Welcome to FRESH-Start</Text>
 
       {/* Description */}
       <Text style={styles.description}>

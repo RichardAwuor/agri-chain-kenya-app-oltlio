@@ -1,6 +1,6 @@
 
 /**
- * PLUS-Kenya Branding Constants
+ * FRESH-Start Branding Constants
  * 
  * Official brand colors: Black, Red, Green, White (Kenya flag colors)
  * Slogan: "Integrating Kenya into global trade"
@@ -70,7 +70,7 @@ export const PLUS_KENYA_BRANDING = {
 
 /**
  * Crop Matrix Data
- * Complete agricultural data for 8 crops supported by PLUS-Kenya
+ * Complete agricultural data for 8 crops supported by FRESH-Start
  */
 export interface CropMatrixData {
   cropName: string;
