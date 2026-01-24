@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FRESH-Start",
-    "slug": "FRESH-Start",
+    "slug": "fresh-start",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
@@ -25,7 +25,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.pluskenya.agrichain"
+      "package": "com.simphoni.pluskenya"
     },
     "web": {
       "favicon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
@@ -42,7 +42,7 @@
     },
     "extra": {
       "router": {},
-      "backendUrl": "https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev"
+      "backendUrl": "https://byasz47t3h2yr6h4dy84uhpa8b3gf8wd.app.specular.dev"
     }
   },
   "scheme": "FRESH-Start"
