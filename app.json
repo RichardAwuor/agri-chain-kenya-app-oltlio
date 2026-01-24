@@ -1,7 +1,8 @@
+
 {
   "expo": {
     "name": "FRESH-Start",
-    "slug": "FRESH-Start",
+    "slug": "fresh-start",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
@@ -14,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pluskenya.agrichain",
+      "bundleIdentifier": "com.freshstart.kenya",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,7 +26,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.simphoni.pluskenya"
+      "package": "com.freshstart.kenya"
     },
     "web": {
       "favicon": "./assets/images/5993be46-595b-4a51-b78b-49c1a6079954.png",
@@ -36,7 +37,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "plus-kenya",
+    "scheme": "freshstart",
     "experiments": {
       "typedRoutes": true
     },
@@ -44,6 +45,5 @@
       "router": {},
       "backendUrl": "https://xe4t6cx3ne2kurn5wbjevfr94p4gwtrd.app.specular.dev"
     }
-  },
-  "scheme": "FRESH-Start"
+  }
 }
