@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "FRESH-Start",
@@ -44,7 +43,7 @@
     },
     "extra": {
       "router": {},
-      "backendUrl": "https://xe4t6cx3ne2kurn5wbjevfr94p4gwtrd.app.specular.dev"
+      "backendUrl": "https://prod-proj-fu9dzq4yfhv2c3rwqxl2j-liwg5h36mq-ey.a.run.app"
     }
   }
 }

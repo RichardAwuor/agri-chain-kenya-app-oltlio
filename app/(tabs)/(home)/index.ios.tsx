@@ -5,7 +5,7 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { router } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PLUS_KENYA_BRANDING } from "@/constants/PlusKenyaBranding";
+import { FRESH_START_BRANDING } from "@/constants/PlusKenyaBranding";
 
 type UserType = 'producer' | 'regulator' | 'service_provider' | 'buyer' | null;
 
@@ -138,14 +138,14 @@ export default function HomeScreen() {
         {/* Header with Logo */}
         <View style={styles.header}>
           <Image 
-            source={require('@/assets/images/62483af3-3f76-4837-b6d5-ddecbe2fa870.png')}
+            source={require('@/assets/images/ecf0e8a0-6634-4afb-a685-87fffea083f9.png')}
             style={styles.logo}
             resizeMode="contain"
           />
           <View style={styles.flagColors}>
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.black }]} />
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.red }]} />
-            <View style={[styles.flagStripe, { backgroundColor: PLUS_KENYA_BRANDING.colors.green }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.black }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.red }]} />
+            <View style={[styles.flagStripe, { backgroundColor: FRESH_START_BRANDING.colors.green }]} />
           </View>
         </View>
 
@@ -188,7 +188,7 @@ export default function HomeScreen() {
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Powered by PLUS-Kenya Initiative
+            Powered by FRESH-Start Initiative
           </Text>
           <Text style={styles.footerSubtext}>
             Connecting farmers, regulators, service providers, and buyers
