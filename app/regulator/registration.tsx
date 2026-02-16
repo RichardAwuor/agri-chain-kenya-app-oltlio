@@ -24,8 +24,7 @@ interface LocationData {
 }
 
 const ORGANIZATION_OPTIONS = [
-  'US Government Agency',
-  'Government Of Kenya',
+  'Government Agency',
   'Supporting NGO',
   'Buyer Agency',
 ];
