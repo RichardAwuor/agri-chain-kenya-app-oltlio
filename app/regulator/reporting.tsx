@@ -4,7 +4,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Stack, router } from 'expo-router';
 import {
   View,
@@ -59,34 +59,7 @@ export default function RegulatorReporting() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [comments, setComments] = useState('');
 
-  useEffect(() => {
-    console.log('RegulatorReporting: Component mounted');
-    loadUserData();
-    getCurrentLocation();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      const userDataStr = await AsyncStorage.getItem('userData');
-      
-      if (userId && userDataStr) {
-        const userData = JSON.parse(userDataStr);
-        setRegulatorId(userId);
-        const fullName = `${userData.firstName} ${userData.lastName}`;
-        setRegulatorName(fullName);
-        setOrganizationName(userData.organizationName || '');
-        console.log('RegulatorReporting: Loaded user data for', fullName);
-      } else {
-        Alert.alert('Error', 'User data not found. Please register first.');
-        router.back();
-      }
-    } catch (error) {
-      console.error('RegulatorReporting: Error loading user data:', error);
-    }
-  };
-
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     console.log('RegulatorReporting: Getting current location');
     setLoadingLocation(true);
     try {
@@ -113,7 +86,36 @@ export default function RegulatorReporting() {
     } finally {
       setLoadingLocation(false);
     }
+  }, []);
+
+  useEffect(() => {
+    console.log('RegulatorReporting: Component mounted');
+    loadUserData();
+    getCurrentLocation();
+  }, [getCurrentLocation]);
+
+  const loadUserData = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const userDataStr = await AsyncStorage.getItem('userData');
+      
+      if (userId && userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        setRegulatorId(userId);
+        const fullName = `${userData.firstName} ${userData.lastName}`;
+        setRegulatorName(fullName);
+        setOrganizationName(userData.organizationName || '');
+        console.log('RegulatorReporting: Loaded user data for', fullName);
+      } else {
+        Alert.alert('Error', 'User data not found. Please register first.');
+        router.back();
+      }
+    } catch (error) {
+      console.error('RegulatorReporting: Error loading user data:', error);
+    }
   };
+
+
 
   const loadNearbyFarmers = async (lat: number, lng: number) => {
     console.log('RegulatorReporting: Loading nearby farmers');

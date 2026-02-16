@@ -103,7 +103,7 @@ export default function BuyerRegistration() {
       setUsCities([]);
       setUsZipCodes([]);
     }
-  }, [selectedState]);
+  }, [selectedState, loadCitiesForState]);
 
   // Load zip codes when city is selected
   useEffect(() => {

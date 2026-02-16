@@ -1,6 +1,6 @@
 
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { colors } from '@/styles/commonStyles';
 import { Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -23,8 +23,8 @@ interface DashboardData {
   farmersVisited: number;
   cropsCovered: number;
   totalAcreage: number;
-  projectedProductionByCrop: Array<{ cropType: string; volumeKg: number }>;
-  collectionEstimationByCrop: Array<{ cropType: string; weekNumber: number; volumeKg: number }>;
+  projectedProductionByCrop: { cropType: string; volumeKg: number }[];
+  collectionEstimationByCrop: { cropType: string; weekNumber: number; volumeKg: number }[];
 }
 
 export default function ServiceProviderDashboard() {
@@ -56,30 +56,7 @@ export default function ServiceProviderDashboard() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    if (serviceProviderId) {
-      loadDashboardData();
-    }
-  }, [serviceProviderId, startDate, endDate]);
-
-  const loadUserData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      const userData = await AsyncStorage.getItem('userData');
-      
-      if (userId && userData) {
-        const user = JSON.parse(userData);
-        setServiceProviderId(userId);
-        const fullName = `${user.firstName} ${user.lastName}`;
-        setServiceProviderName(fullName);
-        console.log('ServiceProviderDashboard: User data loaded', { userId });
-      }
-    } catch (error) {
-      console.error('ServiceProviderDashboard: Error loading user data:', error);
-    }
-  };
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       console.log('ServiceProviderDashboard: Loading dashboard data', {
@@ -105,7 +82,32 @@ export default function ServiceProviderDashboard() {
     } finally {
       setLoading(false);
     }
+  }, [serviceProviderId, startDate, endDate]);
+
+  useEffect(() => {
+    if (serviceProviderId) {
+      loadDashboardData();
+    }
+  }, [serviceProviderId, startDate, endDate, loadDashboardData]);
+
+  const loadUserData = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (userId && userData) {
+        const user = JSON.parse(userData);
+        setServiceProviderId(userId);
+        const fullName = `${user.firstName} ${user.lastName}`;
+        setServiceProviderName(fullName);
+        console.log('ServiceProviderDashboard: User data loaded', { userId });
+      }
+    } catch (error) {
+      console.error('ServiceProviderDashboard: Error loading user data:', error);
+    }
   };
+
+
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
     setShowStartDatePicker(false);

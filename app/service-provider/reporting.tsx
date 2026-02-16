@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { colors } from '@/styles/commonStyles';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
@@ -45,44 +45,7 @@ export default function ServiceProviderReporting() {
   const [showCollectedCropDropdown, setShowCollectedCropDropdown] = useState(false);
   const [showShippedCropDropdown, setShowShippedCropDropdown] = useState(false);
 
-  useEffect(() => {
-    console.log('ServiceProviderReporting: Component mounted');
-    loadUserData();
-    loadCropTypes();
-    getCurrentLocation();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      const userData = await AsyncStorage.getItem('userData');
-      
-      if (userId && userData) {
-        const user = JSON.parse(userData);
-        setServiceProviderId(userId);
-        setServiceProviderName(`${user.firstName} ${user.lastName}`);
-        setOrganizationName(user.organizationName || '');
-        console.log('ServiceProviderReporting: User data loaded', { userId, name: serviceProviderName });
-      }
-    } catch (error) {
-      console.error('ServiceProviderReporting: Error loading user data:', error);
-    }
-  };
-
-  const loadCropTypes = async () => {
-    try {
-      console.log('ServiceProviderReporting: Loading crop types');
-      const { default: api } = await import('@/utils/api');
-      const data = await api.getCropTypes();
-      setCropTypes(data);
-      console.log('ServiceProviderReporting: Crop types loaded', data);
-    } catch (error) {
-      console.error('ServiceProviderReporting: Error loading crop types:', error);
-      setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato', 'NONE']);
-    }
-  };
-
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     try {
       console.log('ServiceProviderReporting: Getting current location');
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -105,7 +68,48 @@ export default function ServiceProviderReporting() {
       console.error('ServiceProviderReporting: Error getting location:', error);
       Alert.alert('Error', 'Failed to get current location');
     }
+  }, []);
+
+  const loadUserData = useCallback(async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (userId && userData) {
+        const user = JSON.parse(userData);
+        setServiceProviderId(userId);
+        setServiceProviderName(`${user.firstName} ${user.lastName}`);
+        setOrganizationName(user.organizationName || '');
+        console.log('ServiceProviderReporting: User data loaded', { userId, name: serviceProviderName });
+      }
+    } catch (error) {
+      console.error('ServiceProviderReporting: Error loading user data:', error);
+    }
+  }, [serviceProviderName]);
+
+  useEffect(() => {
+    console.log('ServiceProviderReporting: Component mounted');
+    loadUserData();
+    loadCropTypes();
+    getCurrentLocation();
+  }, [loadUserData, getCurrentLocation]);
+
+
+
+  const loadCropTypes = async () => {
+    try {
+      console.log('ServiceProviderReporting: Loading crop types');
+      const { default: api } = await import('@/utils/api');
+      const data = await api.getCropTypes();
+      setCropTypes(data);
+      console.log('ServiceProviderReporting: Crop types loaded', data);
+    } catch (error) {
+      console.error('ServiceProviderReporting: Error loading crop types:', error);
+      setCropTypes(['Lettuce', 'Tomato', 'Cucumber', 'Capsicum', 'Cabbage', 'Broccoli', 'Green onion', 'Potato', 'NONE']);
+    }
   };
+
+
 
   const loadNearbyFarmers = async (lat: number, lng: number) => {
     try {

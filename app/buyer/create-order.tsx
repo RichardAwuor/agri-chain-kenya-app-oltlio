@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { colors } from '@/styles/commonStyles';
 import { Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -35,7 +35,7 @@ export default function BuyerCreateOrder() {
   const [showCropDropdown, setShowCropDropdown] = useState(false);
   
   // Available volumes from service provider reports
-  const [availableVolumes, setAvailableVolumes] = useState<Array<{ cropType: string; volumeLbs: number; collectionWeek: number }>>([]);
+  const [availableVolumes, setAvailableVolumes] = useState<{ cropType: string; volumeLbs: number; collectionWeek: number }[]>([]);
   const [loadingVolumes, setLoadingVolumes] = useState(false);
 
   // Calculated values
@@ -51,9 +51,28 @@ export default function BuyerCreateOrder() {
     loadAvailableVolumes();
   }, []);
 
+  const calculateInvoice = useCallback(() => {
+    if (!volumeLbs) {
+      setEstimatedInvoice(0);
+      setFarmerPayment(0);
+      setServiceProviderPayment(0);
+      setGokPayment(0);
+      return;
+    }
+
+    const volume = parseFloat(volumeLbs);
+    const pricePerLb = 2; // Placeholder pricing: $2/lb
+    const invoice = volume * pricePerLb;
+    
+    setEstimatedInvoice(invoice);
+    setFarmerPayment(invoice * 0.4); // 40%
+    setServiceProviderPayment(invoice * 0.4); // 40%
+    setGokPayment(invoice * 0.2); // 20%
+  }, [volumeLbs]);
+
   useEffect(() => {
     calculateInvoice();
-  }, [volumeLbs]);
+  }, [calculateInvoice]);
 
   const loadUserData = async () => {
     try {
@@ -105,24 +124,7 @@ export default function BuyerCreateOrder() {
     }
   };
 
-  const calculateInvoice = () => {
-    if (!volumeLbs) {
-      setEstimatedInvoice(0);
-      setFarmerPayment(0);
-      setServiceProviderPayment(0);
-      setGokPayment(0);
-      return;
-    }
 
-    const volume = parseFloat(volumeLbs);
-    const pricePerLb = 2; // Placeholder pricing: $2/lb
-    const invoice = volume * pricePerLb;
-    
-    setEstimatedInvoice(invoice);
-    setFarmerPayment(invoice * 0.4); // 40%
-    setServiceProviderPayment(invoice * 0.4); // 40%
-    setGokPayment(invoice * 0.2); // 20%
-  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);

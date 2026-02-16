@@ -1,7 +1,7 @@
 
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Stack, router } from 'expo-router';
 import {
   View,
@@ -18,9 +18,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '@/utils/api';
 
 interface LocationData {
-  counties: Array<{ countyName: string; countyCode: string; countyNumber: string }>;
-  subCounties: Array<{ subCounty: string; subCountyNumber: string }>;
-  wards: Array<{ wardName: string; wardNumber: string }>;
+  counties: { countyName: string; countyCode: string; countyNumber: string }[];
+  subCounties: { subCounty: string; subCountyNumber: string }[];
+  wards: { wardName: string; wardNumber: string }[];
 }
 
 const ORGANIZATION_OPTIONS = [
@@ -75,10 +75,22 @@ export default function RegulatorRegistration() {
   const [showSubCountyDropdown, setShowSubCountyDropdown] = useState(false);
   const [showWardDropdown, setShowWardDropdown] = useState(false);
 
+  const loadDropdownData = useCallback(async () => {
+    console.log('RegulatorRegistration: Loading dropdown data');
+    try {
+      await loadCounties();
+      setLoadingData(false);
+    } catch (error) {
+      console.error('RegulatorRegistration: Error loading dropdown data:', error);
+      Alert.alert('Error', 'Failed to load location data. Please try again.');
+      setLoadingData(false);
+    }
+  }, []);
+
   useEffect(() => {
     console.log('RegulatorRegistration: Component mounted');
     loadDropdownData();
-  }, []);
+  }, [loadDropdownData]);
 
   // Validate email in real-time
   useEffect(() => {
@@ -100,17 +112,7 @@ export default function RegulatorRegistration() {
     }
   }, [confirmEmail, email]);
 
-  const loadDropdownData = async () => {
-    console.log('RegulatorRegistration: Loading dropdown data');
-    try {
-      await loadCounties();
-      setLoadingData(false);
-    } catch (error) {
-      console.error('RegulatorRegistration: Error loading dropdown data:', error);
-      Alert.alert('Error', 'Failed to load location data. Please try again.');
-      setLoadingData(false);
-    }
-  };
+
 
   const loadCounties = async () => {
     try {

@@ -19,9 +19,9 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LocationData {
-  counties: Array<{ countyName: string; countyCode: string; countyNumber: string }>;
-  subCounties: Array<{ subCounty: string; subCountyNumber: string }>;
-  wards: Array<{ wardName: string; wardNumber: string }>;
+  counties: { countyName: string; countyCode: string; countyNumber: string }[];
+  subCounties: { subCounty: string; subCountyNumber: string }[];
+  wards: { wardName: string; wardNumber: string }[];
 }
 
 export default function ProducerRegistration() {

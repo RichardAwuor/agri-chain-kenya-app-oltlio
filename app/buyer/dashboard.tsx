@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { colors } from '@/styles/commonStyles';
 import { Stack } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -18,12 +18,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface DashboardData {
-  estimatedCollectionsByCrop: Array<{
+  estimatedCollectionsByCrop: {
     cropType: string;
     weekNumber: number;
     volumeKg: number;
     volumeLbs: number;
-  }>;
+  }[];
 }
 
 interface OrderEntry {
@@ -49,31 +49,7 @@ export default function BuyerDashboard() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    if (buyerId) {
-      loadDashboardData();
-    }
-  }, [buyerId]);
-
-  const loadUserData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      const userData = await AsyncStorage.getItem('userData');
-      
-      if (userId && userData) {
-        const user = JSON.parse(userData);
-        setBuyerId(userId);
-        const fullName = `${user.firstName} ${user.lastName}`;
-        setBuyerName(fullName);
-        setOrganizationName(user.organizationName || '');
-        console.log('BuyerDashboard: User data loaded', { userId });
-      }
-    } catch (error) {
-      console.error('BuyerDashboard: Error loading user data:', error);
-    }
-  };
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       console.log('BuyerDashboard: Loading dashboard data', { buyerId });
@@ -98,7 +74,33 @@ export default function BuyerDashboard() {
     } finally {
       setLoading(false);
     }
+  }, [buyerId]);
+
+  useEffect(() => {
+    if (buyerId) {
+      loadDashboardData();
+    }
+  }, [buyerId, loadDashboardData]);
+
+  const loadUserData = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (userId && userData) {
+        const user = JSON.parse(userData);
+        setBuyerId(userId);
+        const fullName = `${user.firstName} ${user.lastName}`;
+        setBuyerName(fullName);
+        setOrganizationName(user.organizationName || '');
+        console.log('BuyerDashboard: User data loaded', { userId });
+      }
+    } catch (error) {
+      console.error('BuyerDashboard: Error loading user data:', error);
+    }
   };
+
+
 
   // Group collections by crop type and sum volumes
   const availableVolumeByCrop = dashboardData.estimatedCollectionsByCrop.reduce((acc, item) => {

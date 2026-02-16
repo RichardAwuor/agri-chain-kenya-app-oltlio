@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -13,12 +13,7 @@ export default function HomeScreen() {
   const [selectedUserType, setSelectedUserType] = useState<UserType>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('HomeScreen (iOS): Checking for existing user session');
-    checkExistingUser();
-  }, []);
-
-  const checkExistingUser = async () => {
+  const checkExistingUser = useCallback(async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       const userType = await AsyncStorage.getItem('userType');
@@ -65,7 +60,14 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('HomeScreen (iOS): Error checking existing user:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    console.log('HomeScreen (iOS): Checking for existing user session');
+    checkExistingUser();
+  }, [checkExistingUser]);
+
+
 
   const navigateToUserScreen = (userType: UserType, userId: string) => {
     console.log('HomeScreen (iOS): Navigating to user screen', { userType, userId });

@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -49,25 +49,7 @@ export default function RegulatorDashboard() {
     loadUserData();
   }, []);
 
-  useEffect(() => {
-    if (regulatorId) {
-      loadDashboardData();
-    }
-  }, [regulatorId, startDate, endDate]);
-
-  const loadUserData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (userId) {
-        setRegulatorId(userId);
-        console.log('RegulatorDashboard: Loaded user ID:', userId);
-      }
-    } catch (error) {
-      console.error('RegulatorDashboard: Error loading user data:', error);
-    }
-  };
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     console.log('RegulatorDashboard: Loading dashboard data');
     setLoading(true);
     try {
@@ -92,7 +74,27 @@ export default function RegulatorDashboard() {
     } finally {
       setLoading(false);
     }
+  }, [regulatorId, startDate, endDate]);
+
+  useEffect(() => {
+    if (regulatorId) {
+      loadDashboardData();
+    }
+  }, [regulatorId, startDate, endDate, loadDashboardData]);
+
+  const loadUserData = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        setRegulatorId(userId);
+        console.log('RegulatorDashboard: Loaded user ID:', userId);
+      }
+    } catch (error) {
+      console.error('RegulatorDashboard: Error loading user data:', error);
+    }
   };
+
+
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
     setShowStartDatePicker(false);
