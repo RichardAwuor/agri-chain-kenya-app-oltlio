@@ -163,18 +163,19 @@ export default function BuyerRegistration() {
       });
     } catch (error) {
       console.error('BuyerRegistration: Error loading dropdown data:', error);
-      // Fallback data
+      // Fallback data - alphabetically ordered
       setOrganizations([
-        'Costco wholesale',
-        'Walmart',
-        'Whole Foods Market',
-        'The Kroger Co.',
-        'Sprouts Farmers Market',
-        "Trader Joe's",
-        'Albertsons Co.',
-        'Target',
-        'Publix Super Markets',
-        'ALDI',
+        'Al Maya Group',
+        'Carrefour',
+        'Choithrams',
+        'Kibsons',
+        'Lulu Hypermarket',
+        'Nesto Hypermarket',
+        'NRTC Fresh',
+        'Spinneys & Waitrose',
+        'Union Coop',
+        'Viva Supermarket',
+        'West Zone',
       ]);
     }
   };
