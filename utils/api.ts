@@ -221,6 +221,37 @@ export const api = {
     return data;
   },
 
+  // UAE Location Data
+  async getUAEEmirates() {
+    console.log('API: Fetching UAE emirates');
+    const response = await fetch(`${BACKEND_URL}/api/locations/uae-emirates`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get UAE emirates failed', error);
+      throw new Error(`Failed to get UAE emirates: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: UAE emirates fetched successfully', data.length, 'emirates');
+    return data;
+  },
+
+  async getUAEAirports(emirate: string) {
+    console.log('API: Fetching UAE airports for emirate', emirate);
+    const response = await fetch(`${BACKEND_URL}/api/locations/uae-airports?emirate=${encodeURIComponent(emirate)}`);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Get UAE airports failed', error);
+      throw new Error(`Failed to get UAE airports: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: UAE airports fetched successfully', data.length, 'airports');
+    return data;
+  },
+
   // Producer Reports
   async createProducerReport(reportData: {
     producerId: string;

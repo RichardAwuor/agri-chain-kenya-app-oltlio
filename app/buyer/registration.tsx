@@ -16,31 +16,16 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface USState {
+interface UAEEmirate {
   id: string;
-  stateName: string;
-  stateCode: string;
+  emirateName: string;
 }
 
-interface USCity {
-  id: string;
-  cityName: string;
-  stateCode: string;
-}
-
-interface USZipCode {
-  id: string;
-  zipCode: string;
-  cityName: string;
-  stateCode: string;
-}
-
-interface USAirport {
+interface UAEAirport {
   id: string;
   airportName: string;
   airportCode: string;
-  city: string;
-  stateCode: string;
+  emirate: string;
 }
 
 export default function BuyerRegistration() {
@@ -54,14 +39,8 @@ export default function BuyerRegistration() {
   const [lastName, setLastName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [mainOfficeAddress, setMainOfficeAddress] = useState('');
-  const [selectedState, setSelectedState] = useState<USState | null>(null);
-  const [selectedCity, setSelectedCity] = useState<USCity | null>(null);
-  const [selectedZipCode, setSelectedZipCode] = useState<USZipCode | null>(null);
-  const [selectedAirport, setSelectedAirport] = useState<USAirport | null>(null);
-
-  // Manual input fields for city and zip code (placeholders)
-  const [manualCity, setManualCity] = useState('');
-  const [manualZipCode, setManualZipCode] = useState('');
+  const [selectedEmirate, setSelectedEmirate] = useState<UAEEmirate | null>(null);
+  const [selectedAirport, setSelectedAirport] = useState<UAEAirport | null>(null);
 
   // Email validation states
   const [emailValid, setEmailValid] = useState(false);
@@ -69,53 +48,32 @@ export default function BuyerRegistration() {
 
   // Dropdown data
   const [organizations, setOrganizations] = useState<string[]>([]);
-  const [usStates, setUsStates] = useState<USState[]>([]);
-  const [usCities, setUsCities] = useState<USCity[]>([]);
-  const [usZipCodes, setUsZipCodes] = useState<USZipCode[]>([]);
-  const [usAirports, setUsAirports] = useState<USAirport[]>([]);
+  const [uaeEmirates, setUaeEmirates] = useState<UAEEmirate[]>([]);
+  const [uaeAirports, setUaeAirports] = useState<UAEAirport[]>([]);
 
   // Dropdown visibility
   const [showOrganizationDropdown, setShowOrganizationDropdown] = useState(false);
-  const [showStateDropdown, setShowStateDropdown] = useState(false);
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [showZipCodeDropdown, setShowZipCodeDropdown] = useState(false);
+  const [showEmirateDropdown, setShowEmirateDropdown] = useState(false);
   const [showAirportDropdown, setShowAirportDropdown] = useState(false);
 
   // Loading states for cascading dropdowns
-  const [loadingCities, setLoadingCities] = useState(false);
-  const [loadingZipCodes, setLoadingZipCodes] = useState(false);
+  const [loadingAirports, setLoadingAirports] = useState(false);
 
   useEffect(() => {
     console.log('BuyerRegistration: Component mounted');
     loadDropdownData();
   }, []);
 
-  // Load cities when state is selected
+  // Load airports when emirate is selected
   useEffect(() => {
-    if (selectedState) {
-      console.log('BuyerRegistration: Loading cities for state', selectedState.stateCode);
-      loadCitiesForState(selectedState.stateCode);
-      // Reset city and zip code when state changes
-      setSelectedCity(null);
-      setSelectedZipCode(null);
-      setManualCity('');
-      setManualZipCode('');
-      setUsCities([]);
-      setUsZipCodes([]);
+    if (selectedEmirate) {
+      console.log('BuyerRegistration: Loading airports for emirate', selectedEmirate.emirateName);
+      loadAirportsForEmirate(selectedEmirate.emirateName);
+      // Reset airport when emirate changes
+      setSelectedAirport(null);
+      setUaeAirports([]);
     }
-  }, [selectedState, loadCitiesForState]);
-
-  // Load zip codes when city is selected
-  useEffect(() => {
-    if (selectedCity && selectedState) {
-      console.log('BuyerRegistration: Loading zip codes for city', selectedCity.cityName);
-      loadZipCodesForCity(selectedCity.cityName, selectedState.stateCode);
-      // Reset zip code when city changes
-      setSelectedZipCode(null);
-      setManualZipCode('');
-      setUsZipCodes([]);
-    }
-  }, [selectedCity]);
+  }, [selectedEmirate]);
 
   // Validate email in real-time
   useEffect(() => {
@@ -142,28 +100,8 @@ export default function BuyerRegistration() {
   const loadDropdownData = async () => {
     try {
       console.log('BuyerRegistration: Loading dropdown data');
-      const { default: api } = await import('@/utils/api');
       
-      // Load organizations
-      const orgsData = await api.getBuyerOrganizations();
-      setOrganizations(orgsData);
-
-      // Load US states
-      const statesData = await api.getUSStates();
-      setUsStates(statesData);
-
-      // Load US airports
-      const airportsData = await api.getUSAirports();
-      setUsAirports(airportsData);
-
-      console.log('BuyerRegistration: Dropdown data loaded', { 
-        orgsCount: orgsData.length,
-        statesCount: statesData.length,
-        airportsCount: airportsData.length 
-      });
-    } catch (error) {
-      console.error('BuyerRegistration: Error loading dropdown data:', error);
-      // Fallback data - alphabetically ordered
+      // Fallback data - alphabetically ordered organizations
       setOrganizations([
         'Al Maya Group',
         'Carrefour',
@@ -177,38 +115,86 @@ export default function BuyerRegistration() {
         'Viva Supermarket',
         'West Zone',
       ]);
+
+      // Load UAE Emirates from backend
+      try {
+        const { api } = await import('@/utils/api');
+        const emiratesData = await api.getUAEEmirates();
+        setUaeEmirates(emiratesData);
+        console.log('BuyerRegistration: UAE Emirates loaded from backend', emiratesData.length);
+      } catch (error) {
+        console.error('BuyerRegistration: Error loading UAE Emirates from backend:', error);
+        // Fallback to hardcoded data if backend fails
+        const emiratesData = [
+          { id: '1', emirateName: 'Abu Dhabi' },
+          { id: '2', emirateName: 'Dubai' },
+          { id: '3', emirateName: 'Sharjah' },
+          { id: '4', emirateName: 'Ajman' },
+          { id: '5', emirateName: 'Umm Al Quwain' },
+          { id: '6', emirateName: 'Ras Al Khaimah' },
+          { id: '7', emirateName: 'Fujairah' },
+        ];
+        setUaeEmirates(emiratesData);
+        console.log('BuyerRegistration: Using fallback UAE Emirates data');
+      }
+
+      console.log('BuyerRegistration: Dropdown data loaded', { 
+        orgsCount: organizations.length,
+      });
+    } catch (error) {
+      console.error('BuyerRegistration: Error loading dropdown data:', error);
     }
   };
 
-  const loadCitiesForState = async (stateCode: string) => {
-    setLoadingCities(true);
+  const loadAirportsForEmirate = async (emirateName: string) => {
+    setLoadingAirports(true);
     try {
-      console.log('BuyerRegistration: Fetching cities for state', stateCode);
-      const { default: api } = await import('@/utils/api');
-      const citiesData = await api.getUSCities(stateCode);
-      setUsCities(citiesData);
-      console.log('BuyerRegistration: Cities loaded', citiesData.length);
-    } catch (error) {
-      console.error('BuyerRegistration: Error loading cities:', error);
-      Alert.alert('Info', 'Cities data not available. You can enter the city name manually.');
-    } finally {
-      setLoadingCities(false);
-    }
-  };
+      console.log('BuyerRegistration: Fetching airports for emirate', emirateName);
+      
+      // Load airports from backend
+      try {
+        const { api } = await import('@/utils/api');
+        const airportsData = await api.getUAEAirports(emirateName);
+        setUaeAirports(airportsData);
+        console.log('BuyerRegistration: Airports loaded from backend', airportsData.length);
+      } catch (error) {
+        console.error('BuyerRegistration: Error loading airports from backend:', error);
+        // Fallback to hardcoded data if backend fails
+        const airportsByEmirate: Record<string, UAEAirport[]> = {
+          'Abu Dhabi': [
+            { id: '1', airportName: 'Abu Dhabi International Airport', airportCode: 'AUH', emirate: 'Abu Dhabi' },
+            { id: '2', airportName: 'Al Ain International Airport', airportCode: 'AAN', emirate: 'Abu Dhabi' },
+          ],
+          'Dubai': [
+            { id: '3', airportName: 'Dubai International Airport', airportCode: 'DXB', emirate: 'Dubai' },
+            { id: '4', airportName: 'Al Maktoum International Airport', airportCode: 'DWC', emirate: 'Dubai' },
+          ],
+          'Sharjah': [
+            { id: '5', airportName: 'Sharjah International Airport', airportCode: 'SHJ', emirate: 'Sharjah' },
+          ],
+          'Ajman': [
+            { id: '6', airportName: 'Sharjah International Airport (Nearest)', airportCode: 'SHJ', emirate: 'Ajman' },
+          ],
+          'Umm Al Quwain': [
+            { id: '7', airportName: 'Sharjah International Airport (Nearest)', airportCode: 'SHJ', emirate: 'Umm Al Quwain' },
+          ],
+          'Ras Al Khaimah': [
+            { id: '8', airportName: 'Ras Al Khaimah International Airport', airportCode: 'RKT', emirate: 'Ras Al Khaimah' },
+          ],
+          'Fujairah': [
+            { id: '9', airportName: 'Fujairah International Airport', airportCode: 'FJR', emirate: 'Fujairah' },
+          ],
+        };
 
-  const loadZipCodesForCity = async (cityName: string, stateCode: string) => {
-    setLoadingZipCodes(true);
-    try {
-      console.log('BuyerRegistration: Fetching zip codes for city', cityName, stateCode);
-      const { default: api } = await import('@/utils/api');
-      const zipCodesData = await api.getUSZipCodes(cityName, stateCode);
-      setUsZipCodes(zipCodesData);
-      console.log('BuyerRegistration: Zip codes loaded', zipCodesData.length);
+        const airportsData = airportsByEmirate[emirateName] || [];
+        setUaeAirports(airportsData);
+        console.log('BuyerRegistration: Using fallback airports data', airportsData.length);
+      }
     } catch (error) {
-      console.error('BuyerRegistration: Error loading zip codes:', error);
-      Alert.alert('Info', 'Zip codes data not available. You can enter the zip code manually.');
+      console.error('BuyerRegistration: Error loading airports:', error);
+      Alert.alert('Info', 'Airports data not available.');
     } finally {
-      setLoadingZipCodes(false);
+      setLoadingAirports(false);
     }
   };
 
@@ -263,18 +249,8 @@ export default function BuyerRegistration() {
       Alert.alert('Validation Error', 'Please enter the main office address');
       return false;
     }
-    if (!selectedState) {
-      Alert.alert('Validation Error', 'Please select a state');
-      return false;
-    }
-    // Check if city is provided (either from dropdown or manual input)
-    if (!selectedCity && !manualCity.trim()) {
-      Alert.alert('Validation Error', 'Please select or enter a city');
-      return false;
-    }
-    // Check if zip code is provided (either from dropdown or manual input)
-    if (!selectedZipCode && !manualZipCode.trim()) {
-      Alert.alert('Validation Error', 'Please select or enter a zip code');
+    if (!selectedEmirate) {
+      Alert.alert('Validation Error', 'Please select an emirate');
       return false;
     }
     if (!selectedAirport) {
@@ -309,29 +285,28 @@ export default function BuyerRegistration() {
 
     try {
       const { BACKEND_URL } = await import('@/utils/api');
+
+      // Prepare registration data as JSON
+      const registrationData = {
+        email,
+        confirmEmail: email,
+        firstName,
+        lastName,
+        organizationName,
+        mainOfficeAddress,
+        emirate: selectedEmirate?.emirateName || '',
+        officeState: selectedEmirate?.emirateName || '', // Backend compatibility
+        deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
+      };
+
+      console.log('BuyerRegistration: Submitting buyer registration', registrationData);
       
-      // Use manual input if dropdown selection is not available
-      const finalCity = selectedCity?.cityName || manualCity;
-      const finalZipCode = selectedZipCode?.zipCode || manualZipCode;
-
-      // Create FormData for multipart/form-data submission
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('confirmEmail', email);
-      formData.append('firstName', firstName);
-      formData.append('lastName', lastName);
-      formData.append('organizationName', organizationName);
-      formData.append('mainOfficeAddress', mainOfficeAddress);
-      formData.append('officeState', selectedState?.stateName || '');
-      formData.append('officeCity', finalCity);
-      formData.append('officeZipCode', finalZipCode);
-      formData.append('deliveryAirport', selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '');
-
-      console.log('BuyerRegistration: Submitting buyer registration');
       const response = await fetch(`${BACKEND_URL}/api/buyers/register`, {
         method: 'POST',
-        body: formData,
-        // Don't set Content-Type header - let the browser/fetch set it with the boundary
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
       });
 
       if (!response.ok) {
@@ -352,9 +327,7 @@ export default function BuyerRegistration() {
         lastName: result.lastName,
         organizationName: result.organizationName,
         mainOfficeAddress,
-        officeState: selectedState?.stateName || '',
-        officeCity: finalCity,
-        officeZipCode: finalZipCode,
+        emirate: selectedEmirate?.emirateName || '',
         deliveryAirport: selectedAirport ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` : '',
       }));
       await AsyncStorage.setItem('registrationCompleted', 'true');
@@ -508,13 +481,13 @@ export default function BuyerRegistration() {
         placeholderTextColor={colors.textSecondary}
       />
 
-      <Text style={styles.label}>State *</Text>
+      <Text style={styles.label}>Emirate *</Text>
       <TouchableOpacity
         style={styles.dropdown}
-        onPress={() => setShowStateDropdown(!showStateDropdown)}
+        onPress={() => setShowEmirateDropdown(!showEmirateDropdown)}
       >
-        <Text style={selectedState ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {selectedState ? `${selectedState.stateName} (${selectedState.stateCode})` : 'Select state'}
+        <Text style={selectedEmirate ? styles.dropdownText : styles.dropdownPlaceholder}>
+          {selectedEmirate ? selectedEmirate.emirateName : 'Select emirate'}
         </Text>
         <IconSymbol
           ios_icon_name="chevron.down"
@@ -523,144 +496,44 @@ export default function BuyerRegistration() {
           color={colors.textSecondary}
         />
       </TouchableOpacity>
-      {showStateDropdown && (
+      {showEmirateDropdown && (
         <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-          {usStates.map((state) => (
+          {uaeEmirates.map((emirate) => (
             <TouchableOpacity
-              key={state.id}
+              key={emirate.id}
               style={styles.dropdownItem}
               onPress={() => {
-                console.log('BuyerRegistration: State selected', state.stateName);
-                setSelectedState(state);
-                setShowStateDropdown(false);
+                console.log('BuyerRegistration: Emirate selected', emirate.emirateName);
+                setSelectedEmirate(emirate);
+                setShowEmirateDropdown(false);
               }}
             >
               <Text style={styles.dropdownItemText}>
-                {state.stateName} ({state.stateCode})
+                {emirate.emirateName}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
-      <Text style={styles.label}>City *</Text>
-      {usCities.length > 0 ? (
-        <React.Fragment>
-          <TouchableOpacity
-            style={[styles.dropdown, !selectedState && styles.dropdownDisabled]}
-            onPress={() => {
-              if (selectedState) {
-                setShowCityDropdown(!showCityDropdown);
-              } else {
-                Alert.alert('Info', 'Please select a state first');
-              }
-            }}
-            disabled={!selectedState}
-          >
-            <Text style={selectedCity ? styles.dropdownText : styles.dropdownPlaceholder}>
-              {loadingCities ? 'Loading cities...' : (selectedCity ? selectedCity.cityName : 'Select city')}
-            </Text>
-            <IconSymbol
-              ios_icon_name="chevron.down"
-              android_material_icon_name="arrow-drop-down"
-              size={24}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-          {showCityDropdown && !loadingCities && (
-            <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {usCities.map((city) => (
-                <TouchableOpacity
-                  key={city.id}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    console.log('BuyerRegistration: City selected', city.cityName);
-                    setSelectedCity(city);
-                    setManualCity('');
-                    setShowCityDropdown(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemText}>{city.cityName}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </React.Fragment>
-      ) : (
-        <TextInput
-          style={styles.input}
-          value={manualCity}
-          onChangeText={setManualCity}
-          placeholder="Enter city name (e.g., Los Angeles, New York)"
-          placeholderTextColor={colors.textSecondary}
-          editable={!!selectedState}
-        />
-      )}
-
-      <Text style={styles.label}>Zip Code *</Text>
-      {usZipCodes.length > 0 ? (
-        <React.Fragment>
-          <TouchableOpacity
-            style={[styles.dropdown, !selectedCity && !manualCity && styles.dropdownDisabled]}
-            onPress={() => {
-              if (selectedCity || manualCity) {
-                setShowZipCodeDropdown(!showZipCodeDropdown);
-              } else {
-                Alert.alert('Info', 'Please select or enter a city first');
-              }
-            }}
-            disabled={!selectedCity && !manualCity}
-          >
-            <Text style={selectedZipCode ? styles.dropdownText : styles.dropdownPlaceholder}>
-              {loadingZipCodes ? 'Loading zip codes...' : (selectedZipCode ? selectedZipCode.zipCode : 'Select zip code')}
-            </Text>
-            <IconSymbol
-              ios_icon_name="chevron.down"
-              android_material_icon_name="arrow-drop-down"
-              size={24}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-          {showZipCodeDropdown && !loadingZipCodes && (
-            <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-              {usZipCodes.map((zipCode) => (
-                <TouchableOpacity
-                  key={zipCode.id}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    console.log('BuyerRegistration: Zip code selected', zipCode.zipCode);
-                    setSelectedZipCode(zipCode);
-                    setManualZipCode('');
-                    setShowZipCodeDropdown(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemText}>{zipCode.zipCode}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </React.Fragment>
-      ) : (
-        <TextInput
-          style={styles.input}
-          value={manualZipCode}
-          onChangeText={setManualZipCode}
-          placeholder="Enter zip code (e.g., 90001, 10001)"
-          placeholderTextColor={colors.textSecondary}
-          keyboardType="number-pad"
-          editable={!!selectedState}
-        />
-      )}
-
       <Text style={styles.label}>Delivery Airport *</Text>
       <TouchableOpacity
-        style={styles.dropdown}
-        onPress={() => setShowAirportDropdown(!showAirportDropdown)}
+        style={[styles.dropdown, !selectedEmirate && styles.dropdownDisabled]}
+        onPress={() => {
+          if (selectedEmirate) {
+            setShowAirportDropdown(!showAirportDropdown);
+          } else {
+            Alert.alert('Info', 'Please select an emirate first');
+          }
+        }}
+        disabled={!selectedEmirate}
       >
         <Text style={selectedAirport ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {selectedAirport 
-            ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` 
-            : 'Select delivery airport'}
+          {loadingAirports 
+            ? 'Loading airports...' 
+            : (selectedAirport 
+              ? `${selectedAirport.airportName} (${selectedAirport.airportCode})` 
+              : 'Select delivery airport')}
         </Text>
         <IconSymbol
           ios_icon_name="chevron.down"
@@ -669,9 +542,9 @@ export default function BuyerRegistration() {
           color={colors.textSecondary}
         />
       </TouchableOpacity>
-      {showAirportDropdown && (
+      {showAirportDropdown && !loadingAirports && (
         <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-          {usAirports.map((airport) => (
+          {uaeAirports.map((airport) => (
             <TouchableOpacity
               key={airport.id}
               style={styles.dropdownItem}
@@ -683,7 +556,6 @@ export default function BuyerRegistration() {
             >
               <Text style={styles.dropdownItemText}>
                 {airport.airportName} ({airport.airportCode})
-                {airport.city && ` - ${airport.city}, ${airport.stateCode}`}
               </Text>
             </TouchableOpacity>
           ))}
