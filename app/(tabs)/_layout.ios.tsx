@@ -1,22 +1,25 @@
 
 import React from 'react';
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-import { colors } from '@/styles/commonStyles';
 
 export default function TabLayout() {
+  // Green for active, Red for inactive
+  const activeColor = '#006400'; // Green
+  const inactiveColor = '#DC143C'; // Red
+
   return (
     <NativeTabs>
       <NativeTabs.Trigger key="home" name="(home)">
         <Icon 
           sf={{ default: 'house', selected: 'house.fill' }} 
           style={{ 
-            tintColor: colors.kenyaRed,
-            selectedTintColor: colors.kenyaGreen 
+            tintColor: inactiveColor,
+            selectedTintColor: activeColor 
           }}
         />
         <Label style={{ 
-          color: colors.kenyaRed,
-          selectedColor: colors.kenyaGreen 
+          color: inactiveColor,
+          selectedColor: activeColor 
         }}>
           Home
         </Label>
@@ -25,13 +28,13 @@ export default function TabLayout() {
         <Icon 
           sf={{ default: 'person', selected: 'person.fill' }} 
           style={{ 
-            tintColor: colors.kenyaRed,
-            selectedTintColor: colors.kenyaGreen 
+            tintColor: inactiveColor,
+            selectedTintColor: activeColor 
           }}
         />
         <Label style={{ 
-          color: colors.kenyaRed,
-          selectedColor: colors.kenyaGreen 
+          color: inactiveColor,
+          selectedColor: activeColor 
         }}>
           Profile
         </Label>
