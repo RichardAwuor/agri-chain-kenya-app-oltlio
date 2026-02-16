@@ -13,6 +13,7 @@ import { registerDropdownDataRoutes } from './routes/dropdown-data.js';
 import { registerRegulatorRoutes } from './routes/regulators.js';
 import { registerUsLocationsRoutes } from './routes/us-locations.js';
 import { registerServiceProviderReportsRoutes } from './routes/service-provider-reports.js';
+import { registerUaeLocationsRoutes } from './routes/uae-locations.js';
 
 // Create application with schema for full database type support
 export const app = await createApplication(schema);
@@ -36,6 +37,7 @@ registerBuyerRoutes(app);
 registerDropdownDataRoutes(app);
 registerRegulatorRoutes(app);
 registerUsLocationsRoutes(app);
+registerUaeLocationsRoutes(app);
 registerServiceProviderReportsRoutes(app);
 
 await app.run();

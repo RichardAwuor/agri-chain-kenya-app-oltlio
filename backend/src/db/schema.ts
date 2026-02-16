@@ -41,9 +41,7 @@ export const users = pgTable(
     coreMandates: text('core_mandates').array(),
     // Buyer fields
     mainOfficeAddress: text('main_office_address'),
-    officeState: text('office_state'),
-    officeCity: text('office_city'),
-    officeZipCode: text('office_zip_code'),
+    emirate: text('emirate'),
     deliveryAirport: text('delivery_airport'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
