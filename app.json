@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "FRESH-Start",
@@ -38,7 +37,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "fresh-start",
+    "scheme": "FRESH-Start",
     "experiments": {
       "typedRoutes": true
     },
