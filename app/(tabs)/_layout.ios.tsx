@@ -4,7 +4,7 @@ import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
   // Green for active, Red for inactive
-  const activeColor = '#006400'; // Green
+  const activeColor = '#00FF00'; // Bright Green
   const inactiveColor = '#DC143C'; // Red
 
   return (
@@ -12,30 +12,28 @@ export default function TabLayout() {
       <NativeTabs.Trigger key="home" name="(home)">
         <Icon 
           sf={{ default: 'house', selected: 'house.fill' }} 
-          style={{ 
-            tintColor: inactiveColor,
-            selectedTintColor: activeColor 
-          }}
+          drawable="home"
+          tintColor={inactiveColor}
+          selectedTintColor={activeColor}
         />
-        <Label style={{ 
-          color: inactiveColor,
-          selectedColor: activeColor 
-        }}>
+        <Label 
+          color={inactiveColor}
+          selectedColor={activeColor}
+        >
           Home
         </Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger key="profile" name="profile">
         <Icon 
           sf={{ default: 'person', selected: 'person.fill' }} 
-          style={{ 
-            tintColor: inactiveColor,
-            selectedTintColor: activeColor 
-          }}
+          drawable="person"
+          tintColor={inactiveColor}
+          selectedTintColor={activeColor}
         />
-        <Label style={{ 
-          color: inactiveColor,
-          selectedColor: activeColor 
-        }}>
+        <Label 
+          color={inactiveColor}
+          selectedColor={activeColor}
+        >
           Profile
         </Label>
       </NativeTabs.Trigger>
