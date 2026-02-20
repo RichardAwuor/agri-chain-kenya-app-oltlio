@@ -610,6 +610,17 @@ export default function ProducerRegistration() {
             </React.Fragment>
           )}
         </TouchableOpacity>
+        <View style={styles.privacyNoticeBox}>
+          <IconSymbol
+            ios_icon_name="lock.shield"
+            android_material_icon_name="lock"
+            size={16}
+            color={colors.textSecondary}
+          />
+          <Text style={styles.privacyNoticeText}>
+            Your location is used only to locate your farm for agronomy support and produce collection
+          </Text>
+        </View>
         {addressLat && addressLng && (
           <Text style={styles.helperText}>
             Coordinates: {addressLat.toFixed(6)}, {addressLng.toFixed(6)}
@@ -910,6 +921,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.card,
+  },
+  privacyNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    gap: 8,
+  },
+  privacyNoticeText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   infoBox: {
     flexDirection: 'row',
