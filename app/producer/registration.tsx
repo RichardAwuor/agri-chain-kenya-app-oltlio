@@ -387,7 +387,7 @@ export default function ProducerRegistration() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Phone / Mobile Wallet Number *</Text>
+        <Text style={styles.label}>Mobile Wallet Number *</Text>
         <TextInput
           style={styles.input}
           value={phone}
