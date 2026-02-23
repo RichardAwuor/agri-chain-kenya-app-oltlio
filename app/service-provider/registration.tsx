@@ -257,7 +257,7 @@ export default function ServiceProviderRegistration() {
       return false;
     }
     if (!organizationName) {
-      Alert.alert('Validation Error', 'Please select an organization');
+      Alert.alert('Validation Error', 'Please select a registered name');
       return false;
     }
     return true;
@@ -447,13 +447,13 @@ export default function ServiceProviderRegistration() {
         placeholderTextColor={colors.textSecondary}
       />
 
-      <Text style={styles.label}>Organization Name *</Text>
+      <Text style={styles.label}>Registered Name *</Text>
       <TouchableOpacity
         style={styles.dropdown}
         onPress={() => setShowOrganizationDropdown(!showOrganizationDropdown)}
       >
         <Text style={organizationName ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {organizationName || 'Select organization'}
+          {organizationName || 'Select registered name'}
         </Text>
         <IconSymbol
           ios_icon_name="chevron.down"

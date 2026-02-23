@@ -247,7 +247,7 @@ export default function RegulatorRegistration() {
       return false;
     }
     if (!organizationName) {
-      Alert.alert('Validation Error', 'Please select your organization');
+      Alert.alert('Validation Error', 'Please select your registered name');
       return false;
     }
     return true;
@@ -445,13 +445,13 @@ export default function RegulatorRegistration() {
         placeholderTextColor={colors.textSecondary}
       />
 
-      <Text style={styles.label}>Organization Name *</Text>
+      <Text style={styles.label}>Registered Name *</Text>
       <TouchableOpacity
         style={styles.dropdown}
         onPress={() => setShowOrgDropdown(!showOrgDropdown)}
       >
         <Text style={organizationName ? styles.dropdownText : styles.dropdownPlaceholder}>
-          {organizationName || 'Select organization'}
+          {organizationName || 'Select registered name'}
         </Text>
         <IconSymbol
           ios_icon_name="chevron.down"
