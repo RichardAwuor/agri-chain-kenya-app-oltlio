@@ -159,4 +159,35 @@ export function registerUserRoutes(app: App) {
       throw error;
     }
   });
+
+  app.fastify.delete('/api/users/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ userId: id }, 'Deleting producer account');
+
+    try {
+      // Check if user exists and is a producer
+      const user = await app.db.query.users.findFirst({
+        where: eq(schema.users.id, id),
+      });
+
+      if (!user) {
+        app.logger.warn({ userId: id }, 'Producer not found for deletion');
+        return reply.status(404).send({ error: 'Producer not found' });
+      }
+
+      if (user.userType !== 'producer') {
+        app.logger.warn({ userId: id, userType: user.userType }, 'User is not a producer');
+        return reply.status(400).send({ error: 'User is not a producer' });
+      }
+
+      // Delete the user (cascades to producer_reports due to foreign key constraint)
+      await app.db.delete(schema.users).where(eq(schema.users.id, id));
+
+      app.logger.info({ userId: id }, 'Producer account deleted successfully');
+      return { success: true, message: 'Producer account deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, userId: id }, 'Failed to delete producer account');
+      throw error;
+    }
+  });
 }

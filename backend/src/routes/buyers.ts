@@ -265,4 +265,36 @@ export function registerBuyerRoutes(app: App) {
       throw error;
     }
   });
+
+  // Delete buyer account
+  app.fastify.delete('/api/buyers/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ buyerId: id }, 'Deleting buyer account');
+
+    try {
+      // Check if user exists and is a buyer
+      const user = await app.db.query.users.findFirst({
+        where: eq(schema.users.id, id),
+      });
+
+      if (!user) {
+        app.logger.warn({ buyerId: id }, 'Buyer not found for deletion');
+        return reply.status(404).send({ error: 'Buyer not found' });
+      }
+
+      if (user.userType !== 'buyer') {
+        app.logger.warn({ buyerId: id, userType: user.userType }, 'User is not a buyer');
+        return reply.status(400).send({ error: 'User is not a buyer' });
+      }
+
+      // Delete the user (cascades to buyer_orders due to foreign key constraint)
+      await app.db.delete(schema.users).where(eq(schema.users.id, id));
+
+      app.logger.info({ buyerId: id }, 'Buyer account deleted successfully');
+      return { success: true, message: 'Buyer account deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, buyerId: id }, 'Failed to delete buyer account');
+      throw error;
+    }
+  });
 }

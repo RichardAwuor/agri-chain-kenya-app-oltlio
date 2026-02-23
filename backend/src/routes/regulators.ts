@@ -161,6 +161,38 @@ export function registerRegulatorRoutes(app: App) {
       throw error;
     }
   });
+
+  // Delete regulator account
+  app.fastify.delete('/api/regulators/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ regulatorId: id }, 'Deleting regulator account');
+
+    try {
+      // Check if user exists and is a regulator
+      const user = await app.db.query.users.findFirst({
+        where: eq(schema.users.id, id),
+      });
+
+      if (!user) {
+        app.logger.warn({ regulatorId: id }, 'Regulator not found for deletion');
+        return reply.status(404).send({ error: 'Regulator not found' });
+      }
+
+      if (user.userType !== 'regulator') {
+        app.logger.warn({ regulatorId: id, userType: user.userType }, 'User is not a regulator');
+        return reply.status(400).send({ error: 'User is not a regulator' });
+      }
+
+      // Delete the user (cascades to regulator_visits due to foreign key constraint)
+      await app.db.delete(schema.users).where(eq(schema.users.id, id));
+
+      app.logger.info({ regulatorId: id }, 'Regulator account deleted successfully');
+      return { success: true, message: 'Regulator account deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, regulatorId: id }, 'Failed to delete regulator account');
+      throw error;
+    }
+  });
 }
 
 // Haversine formula for distance calculation

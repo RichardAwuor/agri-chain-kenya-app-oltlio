@@ -509,6 +509,38 @@ export function registerServiceProviderRoutes(app: App) {
       }
     }
   );
+
+  // Delete service provider account
+  app.fastify.delete('/api/service-providers/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    app.logger.info({ serviceProviderId: id }, 'Deleting service provider account');
+
+    try {
+      // Check if user exists and is a service provider
+      const user = await app.db.query.users.findFirst({
+        where: eq(schema.users.id, id),
+      });
+
+      if (!user) {
+        app.logger.warn({ serviceProviderId: id }, 'Service provider not found for deletion');
+        return reply.status(404).send({ error: 'Service provider not found' });
+      }
+
+      if (user.userType !== 'service_provider') {
+        app.logger.warn({ serviceProviderId: id, userType: user.userType }, 'User is not a service provider');
+        return reply.status(400).send({ error: 'User is not a service provider' });
+      }
+
+      // Delete the user (cascades to service_provider_visits due to foreign key constraint)
+      await app.db.delete(schema.users).where(eq(schema.users.id, id));
+
+      app.logger.info({ serviceProviderId: id }, 'Service provider account deleted successfully');
+      return { success: true, message: 'Service provider account deleted successfully' };
+    } catch (error) {
+      app.logger.error({ err: error, serviceProviderId: id }, 'Failed to delete service provider account');
+      throw error;
+    }
+  });
 }
 
 // Haversine formula for distance calculation
