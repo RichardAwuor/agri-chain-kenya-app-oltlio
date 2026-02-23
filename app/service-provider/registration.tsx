@@ -332,9 +332,10 @@ export default function ServiceProviderRegistration() {
 
       // Save to AsyncStorage
       await AsyncStorage.setItem('userId', result.id);
-      await AsyncStorage.setItem('userType', 'service_provider');
+      await AsyncStorage.setItem('userType', 'service-provider');
       await AsyncStorage.setItem('userData', JSON.stringify({
         id: result.id,
+        userType: 'service-provider',
         email: result.email,
         firstName: result.firstName,
         lastName: result.lastName,

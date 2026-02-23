@@ -1,7 +1,7 @@
 
 import Constants from 'expo-constants';
 
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'https://efny4tujb4fvak3wz84axmrptxuz7wbq.app.specular.dev';
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'https://xe4t6cx3ne2kurn5wbjevfr94p4gwtrd.app.specular.dev';
 
 console.log('API: Backend URL configured as', BACKEND_URL);
 
@@ -486,6 +486,75 @@ export const api = {
 
     const data = await response.json();
     console.log('API: Regulator organizations fetched successfully', data);
+    return data;
+  },
+
+  // Delete Account endpoints
+  async deleteProducer(producerId: string) {
+    console.log('API: Deleting producer account', producerId);
+    const response = await fetch(`${BACKEND_URL}/api/users/${producerId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Delete producer failed', error);
+      throw new Error(`Failed to delete producer: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Producer deleted successfully', data);
+    return data;
+  },
+
+  async deleteRegulator(regulatorId: string) {
+    console.log('API: Deleting regulator account', regulatorId);
+    const response = await fetch(`${BACKEND_URL}/api/regulators/${regulatorId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Delete regulator failed', error);
+      throw new Error(`Failed to delete regulator: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Regulator deleted successfully', data);
+    return data;
+  },
+
+  async deleteServiceProvider(serviceProviderId: string) {
+    console.log('API: Deleting service provider account', serviceProviderId);
+    const response = await fetch(`${BACKEND_URL}/api/service-providers/${serviceProviderId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Delete service provider failed', error);
+      throw new Error(`Failed to delete service provider: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Service provider deleted successfully', data);
+    return data;
+  },
+
+  async deleteBuyer(buyerId: string) {
+    console.log('API: Deleting buyer account', buyerId);
+    const response = await fetch(`${BACKEND_URL}/api/buyers/${buyerId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('API: Delete buyer failed', error);
+      throw new Error(`Failed to delete buyer: ${error}`);
+    }
+
+    const data = await response.json();
+    console.log('API: Buyer deleted successfully', data);
     return data;
   },
 };

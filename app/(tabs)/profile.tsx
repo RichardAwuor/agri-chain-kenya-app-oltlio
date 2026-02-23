@@ -1,11 +1,13 @@
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from "react-native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CROP_MATRIX, calculateProjectedHarvest as calculateHarvest } from "@/constants/PlusKenyaBranding";
+import { router } from 'expo-router';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface UserData {
   id?: string;
@@ -39,6 +41,12 @@ export default function ProfileScreen() {
     revenuePerSeason: number;
     farmerEarningPerMonth: number;
   } | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
+  const [showDeleteErrorModal, setShowDeleteErrorModal] = useState(false);
+  const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [showSaveErrorModal, setShowSaveErrorModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     console.log('ProfileScreen: Loading user data');
@@ -93,12 +101,71 @@ export default function ProfileScreen() {
       setUserData(updatedData);
       setEditing(false);
       
-      Alert.alert('Success', 'Crop type updated successfully!');
+      setShowSaveSuccessModal(true);
     } catch (error) {
       console.error('ProfileScreen: Error updating crop type:', error);
-      Alert.alert('Error', 'Failed to update crop type. Please try again.');
+      setShowSaveErrorModal(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    console.log('ProfileScreen: Delete account button pressed');
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    console.log('ProfileScreen: User confirmed first delete prompt');
+    setShowDeleteModal(false);
+    setShowConfirmDeleteModal(true);
+  };
+
+  const handleFinalDelete = async () => {
+    console.log('ProfileScreen: User confirmed final delete - proceeding with account deletion');
+    setDeleting(true);
+
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      // Read userType from both userData and AsyncStorage (fallback)
+      const storedUserType = await AsyncStorage.getItem('userType');
+      
+      if (userId && userData) {
+        const { default: api } = await import('@/utils/api');
+        // Use userType from userData first, then fall back to AsyncStorage value
+        const userTypeValue = userData.userType || storedUserType || '';
+        console.log('ProfileScreen: Deleting account via API', { userId, userType: userTypeValue });
+        
+        // Call appropriate delete endpoint based on user type
+        console.log('ProfileScreen: User type for deletion:', userTypeValue);
+        if (userTypeValue === 'producer') {
+          await api.deleteProducer(userId);
+        } else if (userTypeValue === 'regulator') {
+          await api.deleteRegulator(userId);
+        } else if (userTypeValue === 'service-provider' || userTypeValue === 'service_provider') {
+          await api.deleteServiceProvider(userId);
+        } else if (userTypeValue === 'buyer') {
+          await api.deleteBuyer(userId);
+        } else {
+          console.warn('ProfileScreen: Unknown user type for deletion:', userTypeValue);
+          // Attempt generic user deletion as fallback
+          await api.deleteProducer(userId);
+        }
+      }
+
+      // Clear all local data
+      await AsyncStorage.multiRemove(['userId', 'userData', 'userType']);
+      console.log('ProfileScreen: Account deleted successfully, redirecting to welcome screen');
+      
+      setShowConfirmDeleteModal(false);
+      
+      // Redirect to welcome screen
+      router.replace('/welcome');
+    } catch (error) {
+      console.error('ProfileScreen: Error deleting account:', error);
+      setShowConfirmDeleteModal(false);
+      setShowDeleteErrorModal(true);
+      setDeleting(false);
     }
   };
 
@@ -378,7 +445,91 @@ export default function ProfileScreen() {
             </Text>
           </View>
         )}
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <IconSymbol
+              ios_icon_name="exclamationmark.triangle"
+              android_material_icon_name="warning"
+              size={24}
+              color="#DC143C"
+            />
+            <Text style={[styles.sectionTitle, styles.dangerTitle]}>Danger Zone</Text>
+          </View>
+          <View style={[styles.card, styles.dangerCard]}>
+            <Text style={styles.dangerText}>
+              Once you delete your account, there is no going back. All your data will be permanently removed.
+            </Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDeleteAccount}
+            >
+              <IconSymbol
+                ios_icon_name="trash"
+                android_material_icon_name="delete"
+                size={20}
+                color={colors.card}
+              />
+              <Text style={styles.deleteButtonText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Delete Account?"
+        message="Are you sure you want to delete your account? This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        destructive
+      />
+
+      <ConfirmModal
+        visible={showConfirmDeleteModal}
+        title="Final Confirmation"
+        message="This is your last chance. Are you absolutely sure you want to permanently delete your account and all associated data?"
+        confirmText="Delete Forever"
+        cancelText="Keep Account"
+        onConfirm={handleFinalDelete}
+        onCancel={() => setShowConfirmDeleteModal(false)}
+        loading={deleting}
+        destructive
+      />
+
+      <ConfirmModal
+        visible={showDeleteErrorModal}
+        title="Deletion Failed"
+        message="Failed to delete your account. Please try again later."
+        confirmText="OK"
+        cancelText=""
+        onConfirm={() => setShowDeleteErrorModal(false)}
+        onCancel={() => setShowDeleteErrorModal(false)}
+        destructive
+      />
+
+      <ConfirmModal
+        visible={showSaveSuccessModal}
+        title="Success"
+        message="Crop type updated successfully!"
+        confirmText="OK"
+        cancelText=""
+        onConfirm={() => setShowSaveSuccessModal(false)}
+        onCancel={() => setShowSaveSuccessModal(false)}
+      />
+
+      <ConfirmModal
+        visible={showSaveErrorModal}
+        title="Update Failed"
+        message="Failed to update crop type. Please try again."
+        confirmText="OK"
+        cancelText=""
+        onConfirm={() => setShowSaveErrorModal(false)}
+        onCancel={() => setShowSaveErrorModal(false)}
+        destructive
+      />
     </SafeAreaView>
   );
 }
@@ -432,6 +583,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  dangerTitle: {
+    color: '#DC143C',
+  },
   card: {
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -442,6 +596,10 @@ const styles = StyleSheet.create({
   highlightCard: {
     backgroundColor: colors.primary + '10',
     borderColor: colors.primary,
+  },
+  dangerCard: {
+    backgroundColor: '#DC143C10',
+    borderColor: '#DC143C',
   },
   infoRow: {
     flexDirection: 'row',
@@ -593,5 +751,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.card,
     fontWeight: '600',
+  },
+  dangerText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC143C',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.card,
   },
 });

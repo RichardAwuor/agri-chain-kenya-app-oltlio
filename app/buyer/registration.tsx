@@ -322,6 +322,7 @@ export default function BuyerRegistration() {
       await AsyncStorage.setItem('userType', 'buyer');
       await AsyncStorage.setItem('userData', JSON.stringify({
         id: result.id,
+        userType: 'buyer',
         email: result.email,
         firstName: result.firstName,
         lastName: result.lastName,
